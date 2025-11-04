@@ -80,9 +80,11 @@ pip install -r requirements.txt
 
 ## 📋 系统要求
 
-- Python 3.7+
-- `requirements.txt` 中列出的依赖包
-- Chrome浏览器（某些下载功能需要）
+## 📋 Requirements
+
+- Python 3.12+
+- Dependencies listed in `requirements.txt`
+- Chrome browser (for some download features)
 
 ## 🤝 贡献
 
