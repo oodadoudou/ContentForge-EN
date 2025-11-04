@@ -8,22 +8,22 @@ from PIL import Image, ImageFile
 import natsort
 import traceback
 
-# --- 全局配置 ---
+# --- Global Settings ---
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 Image.MAX_IMAGE_PIXELS = None
 
-SUCCESS_MOVE_SUBDIR_NAME = "IMG"  # 成功处理的文件夹将被移动到此目录
+SUCCESS_MOVE_SUBDIR_NAME = "IMG"  # Successfully processed folders will be moved to this directory
 IMAGE_EXTENSIONS_FOR_MERGE = ('.png', '.jpg', '.jpeg', '.webp', '.bmp', '.gif', '.tiff', '.tif')
 
-# --- PDF页面与图像质量设置 ---
+# --- PDF Page and Image Quality Settings ---
 PDF_TARGET_PAGE_WIDTH_PIXELS = 1600
 PDF_DPI = 300
-# --- 全局配置结束 ---
+# --- End of Global Settings ---
 
 
 def print_progress_bar(iteration, total, prefix='', suffix='', decimals=1, length=50, fill='█', print_end="\r"):
     """
-    在终端打印一个可视化的进度条。
+    Prints a visual progress bar in the terminal.
     """
     if total == 0:
         percent_str = "0.0%"
@@ -43,40 +43,40 @@ def print_progress_bar(iteration, total, prefix='', suffix='', decimals=1, lengt
 
 def find_image_folders(root_dir, excluded_dirs):
     """
-    递归遍历根目录，找到所有直接包含图片文件的文件夹。
+    Recursively traverses the root directory to find all folders that directly contain image files.
     """
-    print("\n--- 步骤 1: 正在扫描并查找所有包含图片的文件夹 ---")
+    print("\n--- Step 1: Scanning and finding all folders containing images ---")
     image_folders = []
     
-    # 将排除目录的名称（非完整路径）提取出来用于比较
+    # Extract the names (not full paths) of excluded directories for comparison
     excluded_basenames = [os.path.basename(d) for d in excluded_dirs]
 
     for dirpath, dirnames, filenames in os.walk(root_dir):
-        # 如果当前目录是需要排除的目录，则跳过它和它的所有子目录
+        # If the current directory is in the exclusion list, skip it and its subdirectories
         if os.path.basename(dirpath) in excluded_basenames:
-            dirnames[:] = []  # 清空dirnames可以阻止os.walk继续深入这个目录
+            dirnames[:] = []  # Clearing dirnames prevents os.walk from descending further
             continue
 
         if any(f.lower().endswith(IMAGE_EXTENSIONS_FOR_MERGE) for f in filenames):
             image_folders.append(dirpath)
     
     sorted_folders = natsort.natsorted(image_folders)
-    print(f"    🔍 已找到 {len(sorted_folders)} 个需要处理的图片文件夹。")
+    print(f"    🔍 Found {len(sorted_folders)} image folders to process.")
     return sorted_folders
 
 
 def create_pdf_from_images(image_paths_list, output_pdf_path,
                            target_page_width_px, pdf_target_dpi):
     """
-    从一系列图片文件路径创建一个PDF文件。
+    Creates a PDF file from a list of image file paths.
     """
     if not image_paths_list:
-        print("    警告: 没有有效的图片可用于创建此PDF。")
+        print("    Warning: No valid images available to create this PDF.")
         return None
 
     processed_pil_images = []
     total_images_for_pdf = len(image_paths_list)
-    print_progress_bar(0, total_images_for_pdf, prefix='      转换图片:', suffix='完成', length=40)
+    print_progress_bar(0, total_images_for_pdf, prefix='      Converting images:', suffix='Done', length=40)
 
     for i, image_path in enumerate(image_paths_list):
         try:
@@ -99,12 +99,12 @@ def create_pdf_from_images(image_paths_list, output_pdf_path,
 
                 processed_pil_images.append(img_resized)
         except Exception as e:
-            sys.stdout.write(f"\r      警告: 处理图片 '{os.path.basename(image_path)}' 失败: {e}。已跳过。\n")
+            sys.stdout.write(f"\r      Warning: Failed to process image '{os.path.basename(image_path)}': {e}. Skipped.\n")
         finally:
-            print_progress_bar(i + 1, total_images_for_pdf, prefix='      转换图片:', suffix='完成', length=40)
+            print_progress_bar(i + 1, total_images_for_pdf, prefix='      Converting images:', suffix='Done', length=40)
 
     if not processed_pil_images:
-        print("    错误: 没有图片成功处理，无法创建PDF。")
+        print("    Error: No images were successfully processed; cannot create PDF.")
         return None
 
     try:
@@ -125,10 +125,10 @@ def create_pdf_from_images(image_paths_list, output_pdf_path,
                 optimize=True
             )
         
-        print(f"    ✅ 成功创建 PDF: {os.path.basename(output_pdf_path)}")
+        print(f"    ✅ Successfully created PDF: {os.path.basename(output_pdf_path)}")
         return output_pdf_path
     except Exception as e:
-        print(f"    ❌ 错误: 保存 PDF '{os.path.basename(output_pdf_path)}' 失败: {e}")
+        print(f"    ❌ Error: Failed to save PDF '{os.path.basename(output_pdf_path)}': {e}")
         traceback.print_exc()
         return None
     finally:
@@ -141,19 +141,19 @@ def create_pdf_from_images(image_paths_list, output_pdf_path,
 
 def normalize_filenames(pdf_dir):
     """
-    清理并规范化PDF文件夹中所有文件的名称。
+    Cleans and normalizes the names of all files in the PDF directory.
     """
-    print("\n--- 步骤 3: 正在规范化PDF文件名 ---")
+    print("\n--- Step 3: Normalizing PDF filenames ---")
     try:
         pdf_files = [f for f in os.listdir(pdf_dir) if f.lower().endswith('.pdf')]
     except FileNotFoundError:
-        print(f"    目录 '{pdf_dir}' 未找到，跳过文件名规范化。")
+        print(f"    Directory '{pdf_dir}' not found, skipping filename normalization.")
         return
 
     renamed_count = 0
     for filename in pdf_files:
         base, ext = os.path.splitext(filename)
-        # 移除常见的分隔符和括号
+        # Remove common separators and brackets
         cleaned_base = re.sub(r'[\s()\[\]【】。.]', '', base)
         
         normalized_name = cleaned_base + ext
@@ -163,38 +163,38 @@ def normalize_filenames(pdf_dir):
             new_path = os.path.join(pdf_dir, normalized_name)
             try:
                 os.rename(original_path, new_path)
-                print(f"    重命名: '{filename}' -> '{normalized_name}'")
+                print(f"    Renamed: '{filename}' -> '{normalized_name}'")
                 renamed_count += 1
             except OSError as e:
-                print(f"    ❌ 错误: 重命名 '{filename}' 失败: {e}")
+                print(f"    ❌ Error: Failed to rename '{filename}': {e}")
                 
     if renamed_count > 0:
-        print(f"    ✨ 共规范化了 {renamed_count} 个文件名。")
+        print(f"    ✨ Normalized {renamed_count} filenames.")
     else:
-        print("    所有文件名已符合规范，无需更改。")
+        print("    All filenames are already compliant, no changes needed.")
 
 
 def run_conversion_process(root_dir):
     """
-    执行从查找文件夹到生成PDF再到移动和重命名的完整流程。
+    Executes the complete workflow from finding folders to generating PDFs, moving, and renaming.
     """
-    # 根据根目录名称创建唯一的PDF输出文件夹
+    # Create a unique PDF output folder based on the root directory name
     root_dir_basename = os.path.basename(os.path.abspath(root_dir))
     overall_pdf_output_dir = os.path.join(root_dir, f"{root_dir_basename}_pdfs")
     os.makedirs(overall_pdf_output_dir, exist_ok=True)
     
-    # 创建用于存放成功处理项目的文件夹
+    # Create a folder to store successfully processed projects
     success_move_target_dir = os.path.join(root_dir, SUCCESS_MOVE_SUBDIR_NAME)
     os.makedirs(success_move_target_dir, exist_ok=True)
 
-    # 查找需要处理的文件夹，同时排除管理目录
+    # Find folders to process, excluding management directories
     folders_to_process = find_image_folders(root_dir, [overall_pdf_output_dir, success_move_target_dir])
 
     if not folders_to_process:
-        print("\n在指定目录及其子目录中未找到任何包含图片的文件夹。脚本执行结束。")
+        print("\nNo folders containing images were found in the specified directory and its subdirectories. Script finished.")
         return
 
-    print("\n--- 步骤 2: 开始将图片文件夹批量转换为 PDF ---")
+    print("\n--- Step 2: Starting batch conversion of image folders to PDF ---")
     
     total_folders = len(folders_to_process)
     failed_tasks = []
@@ -202,18 +202,18 @@ def run_conversion_process(root_dir):
 
     for i, image_dir_path in enumerate(folders_to_process):
         folder_name = os.path.basename(image_dir_path)
-        print(f"\n--- ({i+1}/{total_folders}) 正在处理: {folder_name} ---")
+        print(f"\n--- ({i+1}/{total_folders}) Processing: {folder_name} ---")
 
         try:
             image_filenames = [f for f in os.listdir(image_dir_path)
                                if f.lower().endswith(IMAGE_EXTENSIONS_FOR_MERGE) and not f.startswith('.')]
         except Exception as e:
-            print(f"  ❌ 错误: 无法读取文件夹 '{folder_name}' 的内容: {e}")
+            print(f"  ❌ Error: Could not read contents of folder '{folder_name}': {e}")
             failed_tasks.append(folder_name)
             continue
             
         if not image_filenames:
-            print("    文件夹内未找到符合条件的图片，已跳过。")
+            print("    No qualifying images found in the folder, skipped.")
             continue
 
         sorted_image_paths = [os.path.join(image_dir_path, f) for f in natsort.natsorted(image_filenames)]
@@ -227,19 +227,19 @@ def run_conversion_process(root_dir):
         
         if result_path:
             success_count += 1
-            # 移动已成功处理的文件夹
-            print(f"    移动已成功处理的文件夹: {folder_name}")
+            # Move the successfully processed folder
+            print(f"    Moving successfully processed folder: {folder_name}")
             try:
-                # 确保目标文件夹存在
+                # Ensure the target folder exists
                 if os.path.basename(image_dir_path) == os.path.basename(success_move_target_dir):
-                    print(f"      -> 跳过移动，源与目标文件夹同名。")
+                    print(f"      -> Skipped moving, source and target folders have the same name.")
                 else:
                     shutil.move(image_dir_path, success_move_target_dir)
-                    print(f"      -> 已移至 '{SUCCESS_MOVE_SUBDIR_NAME}' 文件夹。")
+                    print(f"      -> Moved to '{SUCCESS_MOVE_SUBDIR_NAME}' folder.")
             except Exception as e:
-                print(f"      ❌ 错误: 移动文件夹失败: {e}")
+                print(f"      ❌ Error: Failed to move folder: {e}")
                 if folder_name not in failed_tasks:
-                    failed_tasks.append(f"{folder_name} (移动失败)")
+                    failed_tasks.append(f"{folder_name} (Move failed)")
                 success_count -= 1
         else:
             failed_tasks.append(folder_name)
@@ -247,29 +247,29 @@ def run_conversion_process(root_dir):
     normalize_filenames(overall_pdf_output_dir)
 
     print("\n" + "=" * 70)
-    print("【任务总结报告】")
+    print("Task Summary Report")
     print("-" * 70)
-    print(f"总计查找项目 (文件夹): {total_folders} 个")
-    print(f"  - ✅ 成功处理: {success_count} 个")
-    print(f"  - ❌ 失败: {len(failed_tasks)} 个")
+    print(f"Total projects (folders) found: {total_folders}")
+    print(f"  - ✅ Successfully processed: {success_count}")
+    print(f"  - ❌ Failed: {len(failed_tasks)}")
     
     if failed_tasks:
-        print("\n失败的项目列表:")
+        print("\nList of failed projects:")
         for task in failed_tasks:
             print(f"  - {task}")
     
     print("-" * 70)
-    print(f"所有成功生成的PDF文件已保存在: {overall_pdf_output_dir}")
-    print(f"所有成功处理的原始文件夹已移至: {success_move_target_dir}")
+    print(f"All successfully generated PDF files have been saved in: {overall_pdf_output_dir}")
+    print(f"All successfully processed original folders have been moved to: {success_move_target_dir}")
 
 
 if __name__ == "__main__":
     print("=" * 70)
-    print("=== 批量图片文件夹转PDF脚本 (V2 - 支持成功后移动) ===")
+    print("=== Batch Image Folder to PDF Converter (V2 - move on success) ===")
     print("=" * 70)
     
     root_input_dir = ""
-    # 尝试从共享设置加载默认路径
+    # Try to load the default path from shared settings
     try:
         sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         from shared_utils import utils
@@ -280,30 +280,30 @@ if __name__ == "__main__":
 
     while True:
         prompt_message = (
-            f"请输入包含多个图片子文件夹的【根目录】路径。\n"
-            f"(直接按 Enter 键将使用默认路径: '{default_root_dir_name}'): "
+            f"Please enter the path to the [root directory] containing multiple image subfolders.\n"
+            f"(Press Enter to use the default path: '{default_root_dir_name}'): "
         )
         user_provided_path = input(prompt_message).strip()
         
         current_path_to_check = user_provided_path if user_provided_path else default_root_dir_name
         if not user_provided_path:
-            print(f"\n使用默认路径: {current_path_to_check}")
+            print(f"\nUsing default path: {current_path_to_check}")
 
         abs_path_to_check = os.path.abspath(current_path_to_check)
         if os.path.isdir(abs_path_to_check):
             root_input_dir = abs_path_to_check
-            print(f"已确认根处理目录: {root_input_dir}")
+            print(f"Confirmed root processing directory: {root_input_dir}")
             break
         else:
-            print(f"\n错误：路径 '{abs_path_to_check}' 不是一个有效的目录或不存在。请重试。\n")
+            print(f"\nError: The path '{abs_path_to_check}' is not a valid directory or does not exist. Please try again.\n")
     
     try:
         run_conversion_process(root_input_dir)
     except Exception as e:
         print("\n" + "!"*70)
-        print("脚本在执行过程中遇到意外的严重错误，已终止。")
-        print(f"错误详情: {e}")
+        print("The script encountered an unexpected critical error and has been terminated.")
+        print(f"Error details: {e}")
         traceback.print_exc()
         print("!"*70)
 
-    print("\n脚本执行完毕。")
+    print("\nScript execution finished.")
