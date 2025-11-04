@@ -1,6 +1,6 @@
 # ContentForge
 
-**[中文版本 / Chinese Version](README_CN.md)**
+**[English Version / 英文版本](https://github.com/oodadoudou/ContentForge-EN) | [中文版本 / Chinese Version](https://github.com/oodadoudou/ContentForge)**
 
 A comprehensive digital content processing toolkit for comics, eBooks, and file management.
 

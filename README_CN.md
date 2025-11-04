@@ -1,6 +1,6 @@
 # ContentForge
 
-**[English Version / 英文版本](README.md)**
+**[English Version / 英文版本](https://github.com/oodadoudou/ContentForge-EN) | [中文版本 / Chinese Version](https://github.com/oodadoudou/ContentForge)**
 
 一个全面的数字内容处理工具包，专为漫画、电子书和文件管理而设计。
 
