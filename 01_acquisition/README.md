@@ -1,65 +1,65 @@
 ============================================================
-           模块一: 内容获取 (01_acquisition)
+           Module 1: Content Acquisition (01_acquisition)
 ============================================================
 
-【简介】
-  本模块的核心功能是从 Bomtoon.tw 平台下载您已购买的漫画。
-  所有操作都需要正确的用户凭证。
+[Introduction]
+  The core function of this module is to download comics you have purchased from the Bomtoon.tw platform.
+  All operations require valid user credentials.
 
 
-【核心脚本】
+[Core Scripts]
   - bomtoontwext.py
-  - update_token.py (自动更新凭证工具)
+  - update_token.py (Tool for automatically updating credentials)
 
 
-【准备工作】
-  您有两种方式来配置运行本模块所需的登录凭证：
+[Preparation]
+  You have two ways to configure the login credentials required to run this module:
 
-  --- 方式一：自动更新 (推荐) ---
-    1. 在 main.py 主菜单进入本模块。
-    2. 选择 "1. [自动更新] 更新/生成登录凭证"。
-    3. 根据提示，【完全关闭】所有 Chrome 浏览器窗口。
-    4. 按回车，脚本会自动抓取最新的凭证并生成
-       `bomtoontw-session` 文件。
+  --- Method 1: Automatic Update (Recommended) ---
+    1. Enter this module from the main menu in main.py.
+    2. Select "1. [Auto-Update] Update/Generate Login Credentials".
+    3. Follow the prompts to [completely close] all Chrome browser windows.
+    4. Press Enter, and the script will automatically fetch the latest credentials and generate
+       the `bomtoontw-session` file.
 
-  --- 方式二：手动配置 ---
-    如果自动更新失败，您可以手动创建 `bomtoontw-session` 文件。
-    请在 01_acquisition 文件夹内创建此文件，并按以下步骤
-    填入两行关键信息。
+  --- Method 2: Manual Configuration ---
+    If the automatic update fails, you can manually create the `bomtoontw-session` file.
+    Please create this file in the 01_acquisition folder and follow the steps below
+    to enter the two key pieces of information.
 
-    [如何获取凭证？]
-      1. 登录网站:
-         在 Google Chrome 浏览器中，正常登录您的 Bomtoon.tw 账号。
+    [How to get the credentials?]
+      1. Log in to the website:
+         Log in to your Bomtoon.tw account normally in the Google Chrome browser.
 
-      2. 打开开发者工具:
-         按下 F12 键（或 Ctrl+Shift+I / Cmd+Opt+I）。
+      2. Open Developer Tools:
+         Press the F12 key (or Ctrl+Shift+I / Cmd+Opt+I).
 
-      3. 获取 Session Token:
-         - 切换到 "Application" (应用) -> "Cookies" -> "https://www.bomtoon.tw"。
-         - 找到名为 "__Secure-next-auth.session-token" 的项目。
-         - 复制其对应的 "Cookie Value" (Cookie 值)。【这是第一行需要的内容】
+      3. Get the Session Token:
+         - Go to "Application" -> "Cookies" -> "https://www.bomtoon.tw".
+         - Find the item named "__Secure-next-auth.session-token".
+         - Copy its corresponding "Cookie Value". [This is the first line of content needed]
 
-      4. 获取 Bearer Token:
-         - 切换到 "Network" (网络) 标签页，刷新页面。
-         - 在请求列表中，找到任意一个向 "api/" 发出的请求。
-         - 点击该请求，在右侧 "Request Headers" (请求标头) 中，
-           找到 "authorization"，复制其【完整的】值 (通常以
-           "Bearer ..." 开头)。【这是第二行需要的内容】
+      4. Get the Bearer Token:
+         - Switch to the "Network" tab and refresh the page.
+         - In the request list, find any request made to "api/".
+         - Click on that request, and in the "Request Headers" on the right,
+           find "authorization" and copy its [complete] value (usually starting with
+           "Bearer ..."). [This is the second line of content needed]
 
-    [填写文件]
-      将您复制的两行凭证，按顺序粘贴到 bomtoontw-session 文件中并保存。
+    [Fill in the file]
+      Paste the two lines of credentials you copied into the bomtoontw-session file in order and save it.
 
 
-【使用方法】
-  本模块的所有功能都已整合到项目根目录的 main.py 交互式菜单中。
+[Usage]
+  All functions of this module have been integrated into the interactive menu of main.py in the project root directory.
 
-  1. 在终端中，进入 ContentForge 根目录，运行 `python main.py`。
-  2. 在主菜单中，输入 "1" 并按回车，进入“内容获取”子菜单。
-  3. 根据子菜单的提示进行操作：
-     - 列出已购买的所有漫画: 用于获取您账号下所有漫画的“漫畫ID”。
-     - 搜索漫画: 根据关键词搜索漫画，以获取“漫畫ID”。
-     - 列出指定漫画的章节: 输入“漫畫ID”，获取所有章节的“章節ID”。
-     - 下载指定章节: 输入“漫畫ID”和一个或多个“章節ID”来下载。
-     - 下载漫画全部章节: 输入“漫畫ID”即可下载整本漫画。
-     - 按序号下载章节: 使用 "1-5" (范围) 或 "3,5,r1" (特定和倒数) 格式下载。
-     - 功能用法介绍: 显示本文件的内容。
+  1. In the terminal, navigate to the ContentForge root directory and run `python main.py`.
+  2. In the main menu, enter "1" and press Enter to go to the "Content Acquisition" submenu.
+  3. Follow the prompts in the submenu to perform operations:
+     - List all purchased comics: Used to get the "Comic ID" of all comics under your account.
+     - Search for comics: Search for comics by keyword to get the "Comic ID".
+     - List chapters of a specific comic: Enter the "Comic ID" to get the "Chapter ID" of all chapters.
+     - Download specific chapters: Enter the "Comic ID" and one or more "Chapter IDs" to download.
+     - Download all chapters of a comic: Enter the "Comic ID" to download the entire comic.
+     - Download chapters by sequence: Use formats like "1-5" (range) or "3,5,r1" (specific and reverse) to download.
+     - Usage instructions: Displays the content of this file.
