@@ -8,13 +8,13 @@ import math
 import traceback
 import json
 
-# --- 全局配置 ---
+# --- Global Settings ---
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 Image.MAX_IMAGE_PIXELS = None
 
 MERGED_LONG_IMAGE_SUBDIR_NAME = "merged_long_img"
 SPLIT_IMAGES_SUBDIR_NAME = "split_by_solid_band"
-SUCCESS_MOVE_SUBDIR_NAME = "IMG"  # 成功处理的文件夹将被移动到此目录
+SUCCESS_MOVE_SUBDIR_NAME = "IMG"  # Successfully processed folders will be moved to this directory
 
 LONG_IMAGE_FILENAME_BASE = "stitched_long_strip"
 IMAGE_EXTENSIONS_FOR_MERGE = ('.png', '.jpg', '.jpeg', '.webp', '.bmp', '.gif', '.tiff', '.tif')
@@ -22,109 +22,109 @@ IMAGE_EXTENSIONS_FOR_MERGE = ('.png', '.jpg', '.jpeg', '.webp', '.bmp', '.gif', 
 MIN_SOLID_COLOR_BAND_HEIGHT = 50
 COLOR_MATCH_TOLERANCE = 45
 
-# 韩漫常见背景色配置（已扩展）
+# Common background colors for Korean webtoons (extended)
 SPLIT_BAND_COLORS_RGB = [
-    # 基础色
-    (255, 255, 255),  # 纯白色
-    (0, 0, 0),        # 纯黑色
+    # Base colors
+    (255, 255, 255),  # Pure white
+    (0, 0, 0),        # Pure black
     
-    # 韩漫常见的浅色背景
-    (248, 248, 248),  # 浅灰白色
-    (240, 240, 240),  # 灰白色
-    (250, 250, 250),  # 接近白色
-    (245, 245, 245),  # 淡灰色
-    (252, 252, 252),  # 极浅灰色
-    (242, 242, 242),  # 浅灰色
-    (238, 238, 238),  # 中浅灰色
-    (235, 235, 235),  # 银灰色
-    (230, 230, 230),  # 浅银灰色
-    (225, 225, 225),  # 中银灰色
-    (220, 220, 220),  # 深银灰色
-    (215, 215, 215),  # 浅钢灰色
-    (210, 210, 210),  # 钢灰色
-    (205, 205, 205),  # 深钢灰色
-    (200, 200, 200),  # 中灰色
+    # Light backgrounds common in Korean webtoons
+    (248, 248, 248),  # Light gray-white
+    (240, 240, 240),  # Gray-white
+    (250, 250, 250),  # Near white
+    (245, 245, 245),  # Pale gray
+    (252, 252, 252),  # Very light gray
+    (242, 242, 242),  # Light gray
+    (238, 238, 238),  # Medium-light gray
+    (235, 235, 235),  # Silver gray
+    (230, 230, 230),  # Light silver gray
+    (225, 225, 225),  # Medium silver gray
+    (220, 220, 220),  # Dark silver gray
+    (215, 215, 215),  # Light steel gray
+    (210, 210, 210),  # Steel gray
+    (205, 205, 205),  # Dark steel gray
+    (200, 200, 200),  # Medium gray
     
-    # 韩漫常见的米色/奶油色背景
-    (255, 253, 250),  # 雪白色
-    (253, 245, 230),  # 古董白
-    (250, 240, 230),  # 亚麻色
-    (255, 248, 220),  # 玉米丝色
-    (255, 250, 240),  # 花白色
-    (253, 245, 230),  # 旧蕾丝色
-    (245, 245, 220),  # 米色
-    (255, 228, 196),  # 桃仁色
+    # Beige/cream backgrounds
+    (255, 253, 250),  # Snow white
+    (253, 245, 230),  # Antique white
+    (250, 240, 230),  # Linen
+    (255, 248, 220),  # Cornsilk
+    (255, 250, 240),  # Floral white
+    (253, 245, 230),  # Old lace
+    (245, 245, 220),  # Beige
+    (255, 228, 196),  # Bisque
     
-    # 韩漫常见的淡粉色背景
-    (255, 240, 245),  # 薰衣草红
-    (255, 228, 225),  # 薄雾玫瑰
-    (255, 218, 185),  # 桃色
-    (255, 239, 213),  # 木瓜色
-    (255, 235, 205),  # 白杏色
+    # Light pink backgrounds
+    (255, 240, 245),  # Lavender blush
+    (255, 228, 225),  # Misty rose
+    (255, 218, 185),  # Peach puff
+    (255, 239, 213),  # Papaya whip
+    (255, 235, 205),  # Blanched almond
     
-    # 韩漫常见的淡蓝色背景
-    (240, 248, 255),  # 爱丽丝蓝
-    (230, 230, 250),  # 薰衣草色
-    (248, 248, 255),  # 幽灵白
-    (245, 245, 245),  # 白烟色
-    (220, 220, 220),  # 淡灰色
+    # Light blue backgrounds
+    (240, 248, 255),  # Alice blue
+    (230, 230, 250),  # Lavender
+    (248, 248, 255),  # Ghost white
+    (245, 245, 245),  # White smoke
+    (220, 220, 220),  # Light gray
     
-    # 韩漫常见的淡绿色背景
-    (240, 255, 240),  # 蜜瓜色
-    (245, 255, 250),  # 薄荷奶油色
-    (240, 255, 255),  # 天蓝色
+    # Light green/blue backgrounds
+    (240, 255, 240),  # Honeydew
+    (245, 255, 250),  # Mint cream
+    (240, 255, 255),  # Azure
     
-    # 韩漫常见的深色背景
-    (195, 195, 195),  # 深中灰色
-    (190, 190, 190),  # 暗灰色
-    (185, 185, 185),  # 深暗灰色
-    (180, 180, 180),  # 灰色
-    (175, 175, 175),  # 深灰色
-    (170, 170, 170),  # 暗深灰色
-    (165, 165, 165),  # 炭灰色
-    (160, 160, 160),  # 深炭灰色
-    (155, 155, 155),  # 暗炭灰色
-    (150, 150, 150),  # 中炭灰色
-    (145, 145, 145),  # 深中炭灰色
-    (140, 140, 140),  # 暗中炭灰色
-    (135, 135, 135),  # 深暗炭灰色
-    (130, 130, 130),  # 极深炭灰色
-    (125, 125, 125),  # 深极炭灰色
-    (120, 120, 120),  # 暗极炭灰色
-    (115, 115, 115),  # 深暗极炭灰色
-    (110, 110, 110),  # 极暗炭灰色
-    (105, 105, 105),  # 深极暗炭灰色
-    (100, 100, 100),  # 暗极暗炭灰色
-    (95, 95, 95),     # 深暗极暗炭灰色
-    (90, 90, 90),     # 极深暗炭灰色
-    (85, 85, 85),     # 深极深暗炭灰色
-    (80, 80, 80),     # 暗极深暗炭灰色
-    (75, 75, 75),     # 深暗极深暗炭灰色
-    (70, 70, 70),     # 极暗极深炭灰色
-    (65, 65, 65),     # 深极暗极深炭灰色
-    (60, 60, 60),     # 暗极暗极深炭灰色
-    (55, 55, 55),     # 深暗极暗极深炭灰色
-    (50, 50, 50),     # 极深暗极暗炭灰色
-    (45, 45, 45),     # 深极深暗极暗炭灰色
-    (40, 40, 40),     # 暗极深暗极暗炭灰色
-    (35, 35, 35),     # 深暗极深暗极暗炭灰色
-    (30, 30, 30),     # 极暗极深暗极暗炭灰色
-    (25, 25, 25),     # 深极暗极深暗极暗炭灰色
-    (20, 20, 20),     # 暗极暗极深暗极暗炭灰色
-    (15, 15, 15),     # 深暗极暗极深暗极暗炭灰色
-    (10, 10, 10),     # 极深暗极暗极深暗极暗炭灰色
-    (5, 5, 5),        # 接近黑色
+    # Dark backgrounds
+    (195, 195, 195),  # Dark medium gray
+    (190, 190, 190),  # Dim gray
+    (185, 185, 185),  # Dark dim gray
+    (180, 180, 180),  # Gray
+    (175, 175, 175),  # Dark gray
+    (170, 170, 170),  # Deep dim gray
+    (165, 165, 165),  # Charcoal gray
+    (160, 160, 160),  # Dark charcoal gray
+    (155, 155, 155),  # Dim charcoal gray
+    (150, 150, 150),  # Medium charcoal gray
+    (145, 145, 145),  # Dark medium charcoal gray
+    (140, 140, 140),  # Dim medium charcoal gray
+    (135, 135, 135),  # Dark dim charcoal gray
+    (130, 130, 130),  # Very dark charcoal gray
+    (125, 125, 125),  # Deep very dark charcoal gray
+    (120, 120, 120),  # Dim very dark charcoal gray
+    (115, 115, 115),  # Dark dim very dark charcoal gray
+    (110, 110, 110),  # Extremely dark charcoal gray
+    (105, 105, 105),  # Deep extremely dark charcoal gray
+    (100, 100, 100),  # Dim extremely dark charcoal gray
+    (95, 95, 95),     # Dark extremely dark charcoal gray
+    (90, 90, 90),     # Very dark deep charcoal gray
+    (85, 85, 85),     # Deep very dark deep charcoal gray
+    (80, 80, 80),     # Dim very dark deep charcoal gray
+    (75, 75, 75),     # Dark very dark deep charcoal gray
+    (70, 70, 70),     # Extremely dark deep charcoal gray
+    (65, 65, 65),     # Deep extremely dark deep charcoal gray
+    (60, 60, 60),     # Dim extremely dark deep charcoal gray
+    (55, 55, 55),     # Dark dim extremely dark deep charcoal gray
+    (50, 50, 50),     # Very dark dim extremely dark charcoal gray
+    (45, 45, 45),     # Deep very dark dim extremely dark charcoal gray
+    (40, 40, 40),     # Dim very dark deep extremely dark charcoal gray
+    (35, 35, 35),     # Dark very dark deep extremely dark charcoal gray
+    (30, 30, 30),     # Extremely dark very deep charcoal gray
+    (25, 25, 25),     # Deep extremely dark very deep charcoal gray
+    (20, 20, 20),     # Dim extremely dark very deep charcoal gray
+    (15, 15, 15),     # Dark dim extremely dark very deep charcoal gray
+    (10, 10, 10),     # Very dark dim extremely dark very deep charcoal gray
+    (5, 5, 5),        # Nearly black
 ]
 
 PDF_TARGET_PAGE_WIDTH_PIXELS = 1500
 PDF_IMAGE_JPEG_QUALITY = 85
 PDF_DPI = 300
-# --- 全局配置结束 ---
+# --- End of Global Settings ---
 
 
 def print_progress_bar(iteration, total, prefix='', suffix='', decimals=1, length=50, fill='█', print_end="\r"):
     """
-    在终端打印进度条。
+    Print a progress bar in the terminal.
     """
     if total == 0:
         percent_str = "0.0%"
@@ -144,18 +144,18 @@ def print_progress_bar(iteration, total, prefix='', suffix='', decimals=1, lengt
 
 def merge_to_long_image(source_project_dir, output_long_image_dir, long_image_filename_only):
     """
-    递归查找源项目目录及其子目录中的所有图片，
-    进行自然排序，然后垂直合并成一个PNG长图。
+    Recursively find all images in the source project directory and its subdirectories,
+    perform natural sorting, and vertically merge into a PNG long image.
     """
-    print(f"\n  --- 步骤 1: 合并项目 '{os.path.basename(source_project_dir)}' 中的所有图片以制作长图 ---")
+    print(f"\n  --- Step 1: Merge all images in project '{os.path.basename(source_project_dir)}' into a long image ---")
     if not os.path.isdir(source_project_dir):
-        print(f"    错误: 源项目目录 '{source_project_dir}' 未找到。")
+        print(f"    Error: Source project directory '{source_project_dir}' not found.")
         return None
 
     os.makedirs(output_long_image_dir, exist_ok=True)
     output_long_image_path = os.path.join(output_long_image_dir, long_image_filename_only)
 
-    print(f"    ... 正在递归扫描 '{os.path.basename(source_project_dir)}' 及其所有子文件夹以查找图片 ...")
+    print(f"    ... Recursively scanning '{os.path.basename(source_project_dir)}' and all subfolders for images ...")
     image_filepaths = []
     try:
         for dirpath, _, filenames in os.walk(source_project_dir):
@@ -167,14 +167,14 @@ def merge_to_long_image(source_project_dir, output_long_image_dir, long_image_fi
                 if filename.lower().endswith(IMAGE_EXTENSIONS_FOR_MERGE) and not filename.startswith('.'):
                     image_filepaths.append(os.path.join(dirpath, filename))
     except Exception as e:
-        print(f"    错误: 扫描目录 '{source_project_dir}' 时发生错误: {e}")
+        print(f"    Error: An error occurred while scanning directory '{source_project_dir}': {e}")
         return None
         
     if not image_filepaths:
-        print(f"    在 '{os.path.basename(source_project_dir)}' 及其子目录中未找到符合条件的图片。")
+        print(f"    No eligible images found in '{os.path.basename(source_project_dir)}' or its subdirectories.")
         return None
 
-    # 对收集到的所有完整路径进行自然排序
+    # Perform natural sorting on collected full paths
     sorted_image_filepaths = natsort.natsorted(image_filepaths)
 
     images_data = []
@@ -183,7 +183,7 @@ def merge_to_long_image(source_project_dir, output_long_image_dir, long_image_fi
 
     total_files_to_analyze = len(sorted_image_filepaths)
     if total_files_to_analyze > 0:
-        print_progress_bar(0, total_files_to_analyze, prefix='    分析图片尺寸:', suffix='完成', length=40)
+        print_progress_bar(0, total_files_to_analyze, prefix='    Analyzing image dimensions:', suffix='Done', length=40)
     
     for i, filepath in enumerate(sorted_image_filepaths):
         try:
@@ -197,17 +197,17 @@ def merge_to_long_image(source_project_dir, output_long_image_dir, long_image_fi
                 if img.width > max_calculated_width:
                     max_calculated_width = img.width
         except Exception as e:
-            print(f"\n    警告: 打开或读取图片 '{os.path.basename(filepath)}' 失败: {e}。已跳过。")
+            print(f"\n    Warning: Failed to open or read image '{os.path.basename(filepath)}': {e}. Skipped.")
             continue
         if total_files_to_analyze > 0:
-            print_progress_bar(i + 1, total_files_to_analyze, prefix='    分析图片尺寸:', suffix='完成', length=40)
+            print_progress_bar(i + 1, total_files_to_analyze, prefix='    Analyzing image dimensions:', suffix='Done', length=40)
 
     if not images_data:
-        print("    没有有效的图片可供合并。")
+        print("    No valid images available for merging.")
         return None
 
     if max_calculated_width == 0 or total_calculated_height == 0:
-        print(f"    计算出的画布尺寸为零 ({max_calculated_width}x{total_calculated_height})，无法创建长图。")
+        print(f"    Computed canvas size is zero ({max_calculated_width}x{total_calculated_height}); cannot create long image.")
         return None
 
     merged_canvas = Image.new('RGBA', (max_calculated_width, total_calculated_height), (0, 0, 0, 0))
@@ -215,7 +215,7 @@ def merge_to_long_image(source_project_dir, output_long_image_dir, long_image_fi
 
     total_files_to_paste = len(images_data)
     if total_files_to_paste > 0:
-        print_progress_bar(0, total_files_to_paste, prefix='    粘贴图片:    ', suffix='完成', length=40)
+        print_progress_bar(0, total_files_to_paste, prefix='    Pasting images:    ', suffix='Done', length=40)
     for i, item_info in enumerate(images_data):
         try:
             with Image.open(item_info["path"]) as img:
@@ -224,25 +224,25 @@ def merge_to_long_image(source_project_dir, output_long_image_dir, long_image_fi
                 merged_canvas.paste(img_to_paste, (x_offset, current_y_offset), img_to_paste if img_to_paste.mode == 'RGBA' else None)
                 current_y_offset += item_info["height"]
         except Exception as e:
-            print(f"\n    警告: 粘贴图片 '{item_info['path']}' 失败: {e}。")
+            print(f"\n    Warning: Failed to paste image '{item_info['path']}': {e}.")
             pass
         if total_files_to_paste > 0:
-            print_progress_bar(i + 1, total_files_to_paste, prefix='    粘贴图片:    ', suffix='完成', length=40)
+            print_progress_bar(i + 1, total_files_to_paste, prefix='    Pasting images:    ', suffix='Done', length=40)
 
     try:
         merged_canvas.save(output_long_image_path, format='PNG')
-        print(f"    成功合并图片到: {output_long_image_path}")
+        print(f"    Successfully merged images to: {output_long_image_path}")
         return output_long_image_path
     except Exception as e:
-        print(f"    错误: 保存合并后的长图失败: {e}")
+        print(f"    Error: Failed to save merged long image: {e}")
         return None
 
 
-# 注意：原 detect_and_add_background_colors 函数已删除
-# 现在直接使用预设的韩漫常见背景色，提高速度和效率
+# Note: The original detect_and_add_background_colors function has been removed.
+# We now directly use preset common Korean webtoon background colors to improve speed and efficiency.
 
 def are_colors_close(color1, color2, tolerance):
-    """根据欧氏距离检查两种RGB颜色是否接近。"""
+    """Check whether two RGB colors are close based on Euclidean distance."""
     if tolerance == 0:
         return color1 == color2
     r1, g1, b1 = color1
@@ -251,7 +251,7 @@ def are_colors_close(color1, color2, tolerance):
     return distance <= tolerance
 
 def is_solid_color_row(pixels, y, width, solid_colors_list, tolerance):
-    """检查给定行是否为纯色带，允许一定的容差。"""
+    """Check if a given row is a solid color band within a tolerance."""
     if width == 0:
         return False
 
@@ -273,10 +273,10 @@ def is_solid_color_row(pixels, y, width, solid_colors_list, tolerance):
     return True
 
 def split_long_image(long_image_path, output_split_dir, min_solid_band_height, band_colors_list, tolerance):
-    """基于在足够高的纯色带后找到内容行的逻辑来分割长图。"""
-    print(f"\n  --- 步骤 2: 按纯色带分割长图 '{os.path.basename(long_image_path)}' ---")
+    """Split long images based on finding content rows after sufficiently tall solid color bands."""
+    print(f"\n  --- Step 2: Split long image '{os.path.basename(long_image_path)}' by solid color bands ---")
     if not os.path.isfile(long_image_path):
-        print(f"    错误: 长图路径 '{long_image_path}' 未找到。")
+        print(f"    Error: Long image path '{long_image_path}' not found.")
         return []
 
     os.makedirs(output_split_dir, exist_ok=True)
@@ -290,7 +290,7 @@ def split_long_image(long_image_path, output_split_dir, min_solid_band_height, b
         img_width, img_height = img.size
 
         if img_height == 0 or img_width == 0:
-            print(f"    图片 '{os.path.basename(long_image_path)}' 尺寸为零，无法分割。")
+            print(f"    Image '{os.path.basename(long_image_path)}' has zero dimensions; cannot split.")
             return []
 
         original_basename, _ = os.path.splitext(os.path.basename(long_image_path))
@@ -298,14 +298,14 @@ def split_long_image(long_image_path, output_split_dir, min_solid_band_height, b
         current_segment_start_y = 0
         solid_band_after_last_content_start_y = -1
 
-        print_progress_bar(0, img_height, prefix='    扫描长图:    ', suffix='完成', length=40)
+        print_progress_bar(0, img_height, prefix='    Scanning long image:    ', suffix='Done', length=40)
 
         for y in range(img_height):
-            print_progress_bar(y + 1, img_height, prefix='    扫描长图:    ', suffix=f'第 {y+1}/{img_height} 行', length=40)
+            print_progress_bar(y + 1, img_height, prefix='    Scanning long image:    ', suffix=f'Row {y+1}/{img_height}', length=40)
 
             is_solid = is_solid_color_row(pixels, y, img_width, band_colors_list, tolerance)
 
-            if not is_solid: # 这是一个 "内容" 行
+            if not is_solid:  # This is a "content" row
                 if solid_band_after_last_content_start_y != -1:
                     solid_band_height = y - solid_band_after_last_content_start_y
                     if solid_band_height >= min_solid_band_height:
@@ -322,36 +322,36 @@ def split_long_image(long_image_path, output_split_dir, min_solid_band_height, b
                                 print(f"      保存分割片段 '{output_filename}' 失败: {e_save}")
                         current_segment_start_y = cut_point_y
                 solid_band_after_last_content_start_y = -1
-            else: # 这是一个 "纯色" 行
+            else:  # This is a "solid" row
                 if solid_band_after_last_content_start_y == -1:
                     solid_band_after_last_content_start_y = y
 
         if current_segment_start_y < img_height:
             segment = img.crop((0, current_segment_start_y, img_width, img_height))
-            if segment.height > 10: # 避免保存过小的切片
+            if segment.height > 10:  # Avoid saving very small slices
                 output_filename = f"{original_basename}_split_part_{part_index}.png"
                 output_filepath = os.path.join(output_split_dir, output_filename)
                 try:
                     segment.save(output_filepath, "PNG")
                     split_image_paths.append(output_filepath)
                 except Exception as e_save:
-                     print(f"      保存最后一个分割片段 '{output_filename}' 失败: {e_save}")
+                    print(f"      Failed to save the last split segment '{output_filename}': {e_save}")
 
         if not split_image_paths and img_height > 0:
-            print(f"    未能根据指定的纯色带分割 '{os.path.basename(long_image_path)}'。")
-            print(f"    将使用原始合并长图进行下一步。")
+            print(f"    Failed to split '{os.path.basename(long_image_path)}' based on the specified solid bands.")
+            print(f"    The original merged long image will be used for the next step.")
             shutil.copy2(long_image_path, os.path.join(output_split_dir, os.path.basename(long_image_path)))
             return [os.path.join(output_split_dir, os.path.basename(long_image_path))]
 
     except Exception as e:
-        print(f"    分割图片 '{os.path.basename(long_image_path)}' 时发生错误: {e}")
+        print(f"    Error while splitting image '{os.path.basename(long_image_path)}': {e}")
         traceback.print_exc()
 
     return natsort.natsorted(split_image_paths)
 
 
 def _merge_image_list_for_repack(image_paths, output_path):
-    """一个专门用于重打包的内部辅助函数。"""
+    """An internal helper function specifically for repacking."""
     if not image_paths:
         return False
     
@@ -385,13 +385,13 @@ def _merge_image_list_for_repack(image_paths, output_path):
 
 def repack_split_images(split_image_paths, output_dir, base_filename, max_size_mb=8):
     """
-    将分割后的图片按大小重新打包合并。
-    - 合并后的图片块上限为 max_size_mb。
-    - 如果单张图片已超过上限，则直接保留，不参与合并。
+    Repack split images by size.
+    - Upper limit per merged image block is max_size_mb.
+    - If a single image exceeds the limit, it is retained as-is and not merged.
     """
-    print(f"\n  --- 步骤 2.5: 重打包图片块 (目标大小: < {max_size_mb}MB) ---")
+    print(f"\n  --- Step 2.5: Repack image blocks (target size: < {max_size_mb}MB) ---")
     if not split_image_paths:
-        print("    没有可供重打包的图片。")
+        print("    No images available for repacking.")
         return []
 
     max_size_bytes = max_size_mb * 1024 * 1024
@@ -402,7 +402,7 @@ def repack_split_images(split_image_paths, output_dir, base_filename, max_size_m
     repack_index = 1
     
     total_files = len(split_image_paths)
-    print_progress_bar(0, total_files, prefix='    处理图片块: ', suffix='开始', length=40)
+    print_progress_bar(0, total_files, prefix='    Processing image blocks: ', suffix='Start', length=40)
 
     for i, img_path in enumerate(split_image_paths):
         if not os.path.exists(img_path): continue
@@ -427,7 +427,7 @@ def repack_split_images(split_image_paths, output_dir, base_filename, max_size_m
             shutil.copy2(img_path, output_path_oversized)
             repacked_paths.append(output_path_oversized)
             repack_index += 1
-            print_progress_bar(i + 1, total_files, prefix='    处理图片块: ', suffix=f'{repack_index-1} 个包完成', length=40)
+            print_progress_bar(i + 1, total_files, prefix='    Processing image blocks: ', suffix=f'{repack_index-1} bundle(s) complete', length=40)
             continue # 处理下一个文件
 
         # 情况2: 将当前文件加入桶中会超出上限
@@ -447,7 +447,7 @@ def repack_split_images(split_image_paths, output_dir, base_filename, max_size_m
             current_bucket.append(img_path)
             current_bucket_size += file_size
         
-        print_progress_bar(i + 1, total_files, prefix='    处理图片块: ', suffix=f'{repack_index-1} 个包完成', length=40)
+        print_progress_bar(i + 1, total_files, prefix='    Processing image blocks: ', suffix=f'{repack_index-1} bundle(s) complete', length=40)
 
     # 处理循环结束后所有剩余在桶中的图片
     if current_bucket:
@@ -456,25 +456,25 @@ def repack_split_images(split_image_paths, output_dir, base_filename, max_size_m
         if _merge_image_list_for_repack(current_bucket, output_path):
             repacked_paths.append(output_path)
     
-    print_progress_bar(total_files, total_files, prefix='    处理图片块: ', suffix='全部完成', length=40)
-    print(f"    重打包完成。生成了 {len(repacked_paths)} 个新的图片块。")
+    print_progress_bar(total_files, total_files, prefix='    Processing image blocks: ', suffix='All done', length=40)
+    print(f"    Repack complete. Generated {len(repacked_paths)} new image block(s).")
 
     # 清理掉原始的、未打包的分割图片
-    print("    ... 正在清理原始分割文件 ...")
+    print("    ... Cleaning up original split files ...")
     for path in split_image_paths:
         try:
             os.remove(path)
         except OSError as e:
-            print(f"      无法删除原始文件 {os.path.basename(path)}: {e}")
+            print(f"      Unable to delete original file {os.path.basename(path)}: {e}")
 
     return natsort.natsorted(repacked_paths)
 
 def create_pdf_from_images(image_paths_list, output_pdf_dir, pdf_filename_only,
                            target_page_width_px, image_jpeg_quality, pdf_target_dpi):
-    """从图片路径列表创建PDF文件。"""
-    print(f"\n  --- 步骤 3: 从图片块创建 PDF '{pdf_filename_only}' ---")
+    """Create a PDF file from a list of image paths."""
+    print(f"\n  --- Step 3: Create PDF '{pdf_filename_only}' from image blocks ---")
     if not image_paths_list:
-        print("    没有可用的图片块来创建 PDF。")
+        print("    No image blocks available to create a PDF.")
         return None
 
     pdf_full_path = os.path.join(output_pdf_dir, pdf_filename_only)
@@ -502,7 +502,7 @@ def create_pdf_from_images(image_paths_list, output_pdf_dir, pdf_filename_only,
 
                 original_width, original_height = img_to_process.size
                 if original_width == 0 or original_height == 0:
-                    print(f"    警告: 图片 '{os.path.basename(image_path)}' 尺寸为零，已跳过。")
+                    print(f"    Warning: Image '{os.path.basename(image_path)}' has zero dimensions; skipped.")
                     if total_images_for_pdf > 0: print_progress_bar(i + 1, total_images_for_pdf, prefix='    处理PDF图片:', suffix='完成', length=40)
                     continue
                 
@@ -517,10 +517,10 @@ def create_pdf_from_images(image_paths_list, output_pdf_dir, pdf_filename_only,
                 processed_pil_images.append(img_resized)
 
         except Exception as e:
-            print(f"\n    警告: 处理PDF图片 '{os.path.basename(image_path)}' 失败: {e}。已跳过。")
+            print(f"\n    Warning: Failed to process PDF image '{os.path.basename(image_path)}': {e}. Skipped.")
             pass
         if total_images_for_pdf > 0:
-            print_progress_bar(i + 1, total_images_for_pdf, prefix='    处理PDF图片:', suffix='完成', length=40)
+            print_progress_bar(i + 1, total_images_for_pdf, prefix='    Processing PDF images:', suffix='Done', length=40)
 
     if not processed_pil_images:
         print("    没有图片被成功处理以包含在PDF中。")
@@ -538,10 +538,10 @@ def create_pdf_from_images(image_paths_list, output_pdf_dir, pdf_filename_only,
             quality=image_jpeg_quality,
             optimize=True
         )
-        print(f"    成功创建 PDF: {pdf_full_path}")
+        print(f"    Successfully created PDF: {pdf_full_path}")
         return pdf_full_path
     except Exception as e:
-        print(f"    保存 PDF 失败: {e}")
+        print(f"    Failed to save PDF: {e}")
         return None
     finally:
         for img_obj in processed_pil_images:
@@ -552,36 +552,36 @@ def create_pdf_from_images(image_paths_list, output_pdf_dir, pdf_filename_only,
 
 
 def cleanup_intermediate_dirs(long_img_dir, split_img_dir):
-    """清理指定的中间文件目录。"""
-    print(f"\n  --- 步骤 4: 清理中间文件 ---")
-    for dir_to_remove, dir_name_for_log in [(long_img_dir, "长图合并"), (split_img_dir, "图片分割与重打包")]:
+    """Clean specified intermediate file directories."""
+    print(f"\n  --- Step 4: Clean up intermediate files ---")
+    for dir_to_remove, dir_name_for_log in [(long_img_dir, "Long image merge"), (split_img_dir, "Image split and repack")]:
         if os.path.isdir(dir_to_remove):
             try:
                 shutil.rmtree(dir_to_remove)
-                print(f"    已删除中间 {dir_name_for_log} 文件夹: {dir_to_remove}")
+                print(f"    Deleted intermediate '{dir_name_for_log}' folder: {dir_to_remove}")
             except Exception as e:
-                print(f"    删除文件夹 '{dir_to_remove}' 失败: {e}")
+                print(f"    Failed to delete folder '{dir_to_remove}': {e}")
 
 
 if __name__ == "__main__":
-    print("自动化图片批量处理流程 (V3.6 - 集中式PDF输出文件夹)")
-    print("工作流程: 1.合并 -> 2.分割 -> 2.5.重打包 -> 3.创建PDF -> 4.清理 -> 5.移动成功项")
+    print("Automated Image Batch Processing Workflow (V3.6 - Centralized PDF output folder)")
+    print("Workflow: 1.Merge -> 2.Split -> 2.5.Repack -> 3.Create PDF -> 4.Cleanup -> 5.Move successful items")
     print("-" * 70)
     
     def load_default_path_from_settings():
-        """从共享设置文件中读取默认工作目录。"""
+        """Read default work directory from the shared settings file."""
         try:
-            # 向上导航两层以找到项目根目录，然后定位到 settings.json
+            # Navigate up two levels to find the project root, then locate settings.json
             project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
             settings_path = os.path.join(project_root, 'shared_assets', 'settings.json')
             with open(settings_path, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
-            # 同时将空或null的 default_work_dir 视为无效
+            # Treat empty or null default_work_dir as invalid
             default_dir = settings.get("default_work_dir")
             return default_dir if default_dir else "."
         except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
-            print(f"警告: 读取 settings.json 失败 ({e})。将使用备用路径。")
-            # 如果无法读取设置文件，则提供一个通用的备用路径
+            print(f"Warning: Failed to read settings.json ({e}). Using fallback path.")
+            # Provide a generic fallback path if settings cannot be read
             return os.path.join(os.path.expanduser("~"), "Downloads")
     
     default_root_dir_name = load_default_path_from_settings()
@@ -589,33 +589,33 @@ if __name__ == "__main__":
     root_input_dir = ""
     while True:
         prompt_message = (
-            f"请输入包含一个或多个项目子文件夹的【根目录】路径。\n"
-            f"脚本将递归处理每个项目子文件夹中的所有图片。\n"
-            f"(直接按 Enter 键将使用默认路径: '{default_root_dir_name}'): "
+            f"Please enter the [root directory] path containing one or more project subfolders.\n"
+            f"The script will recursively process all images in each project subfolder.\n"
+            f"(Press Enter to use the default path: '{default_root_dir_name}'): "
         )
         user_provided_path = input(prompt_message).strip()
         current_path_to_check = user_provided_path if user_provided_path else default_root_dir_name
         if not user_provided_path:
-            print(f"使用默认路径: {current_path_to_check}")
+            print(f"Using default path: {current_path_to_check}")
 
         abs_path_to_check = os.path.abspath(current_path_to_check)
         if os.path.isdir(abs_path_to_check):
             root_input_dir = abs_path_to_check
-            print(f"已选定根处理目录: {root_input_dir}")
+            print(f"Selected root processing directory: {root_input_dir}")
             break
         else:
-            print(f"错误: 路径 '{abs_path_to_check}' 不是一个有效的目录或不存在。")
+            print(f"Error: Path '{abs_path_to_check}' is not a valid directory or does not exist.")
 
-    # 根据根目录名称创建唯一的PDF输出文件夹
+    # Create a unique PDF output folder based on the root directory name
     root_dir_basename = os.path.basename(os.path.abspath(root_input_dir))
     overall_pdf_output_dir = os.path.join(root_input_dir, f"{root_dir_basename}_pdfs")
     os.makedirs(overall_pdf_output_dir, exist_ok=True)
     
-    # 创建用于存放成功处理项目的文件夹
+    # Create a folder to store successfully processed projects
     success_move_target_dir = os.path.join(root_input_dir, SUCCESS_MOVE_SUBDIR_NAME)
     os.makedirs(success_move_target_dir, exist_ok=True)
 
-    # 扫描要处理的项目子文件夹，排除脚本的管理文件夹
+    # Scan project subfolders to process, excluding script management folders
     subdirectories = [d for d in os.listdir(root_input_dir)
                       if os.path.isdir(os.path.join(root_input_dir, d)) and \
                          d != SUCCESS_MOVE_SUBDIR_NAME and \
@@ -623,27 +623,27 @@ if __name__ == "__main__":
                          not d.startswith('.')]
 
     if not subdirectories:
-        print(f"\n在根目录 '{root_input_dir}' 中未找到可处理的项目子文件夹。")
+        print(f"\nNo processable project subfolders found in root directory '{root_input_dir}'.")
         sys.exit()
 
     sorted_subdirectories = natsort.natsorted(subdirectories)
-    print(f"\n将按顺序处理以下 {len(sorted_subdirectories)} 个项目文件夹: {', '.join(sorted_subdirectories)}")
+    print(f"\nWill process the following {len(sorted_subdirectories)} project folders in order: {', '.join(sorted_subdirectories)}")
 
     total_subdirs_to_process = len(sorted_subdirectories)
     failed_subdirs_list = []
 
     for i, subdir_name in enumerate(sorted_subdirectories):
-        print_progress_bar(i, total_subdirs_to_process, prefix="总进度:", suffix=f'{subdir_name}', length=40)
-        print(f"\n\n{'='*10} 开始处理项目文件夹: {subdir_name} ({i+1}/{total_subdirs_to_process}) {'='*10}")
+        print_progress_bar(i, total_subdirs_to_process, prefix="Total progress:", suffix=f'{subdir_name}', length=40)
+        print(f"\n\n{'='*10} Starting project folder: {subdir_name} ({i+1}/{total_subdirs_to_process}) {'='*10}")
         
         current_processing_subdir = os.path.join(root_input_dir, subdir_name)
 
-        # 中间文件存储在正在处理的项目文件夹内部
+        # Intermediate files are stored inside the project folder being processed
         path_long_image_output_dir_current = os.path.join(current_processing_subdir, MERGED_LONG_IMAGE_SUBDIR_NAME)
         path_split_images_output_dir_current = os.path.join(current_processing_subdir, SPLIT_IMAGES_SUBDIR_NAME)
         current_long_image_filename = f"{subdir_name}_{LONG_IMAGE_FILENAME_BASE}.png"
 
-        # 调用修改后的合并函数，它将递归扫描 current_processing_subdir
+        # Call the modified merge function, which recursively scans current_processing_subdir
         created_long_image_path = merge_to_long_image(
             current_processing_subdir,
             path_long_image_output_dir_current,
@@ -652,8 +652,8 @@ if __name__ == "__main__":
 
         pdf_created_for_this_subdir = False
         if created_long_image_path:
-            # 直接使用预设的韩漫常见背景色，提高速度和效率
-            print(f"    🎨 使用预设的韩漫常见背景色进行分割，提高速度和效率...")
+            # Directly use preset common Korean webtoon background colors to improve speed and efficiency
+            print(f"    🎨 Using preset common Korean webtoon background colors to improve speed and efficiency...")
             
             split_segment_paths = split_long_image(
                 created_long_image_path,
@@ -688,43 +688,43 @@ if __name__ == "__main__":
         if pdf_created_for_this_subdir:
             cleanup_intermediate_dirs(path_long_image_output_dir_current, path_split_images_output_dir_current)
             
-            print(f"\n  --- 步骤 5: 移动已成功处理的项目文件夹 ---")
+            print(f"\n  --- Step 5: Move successfully processed project folder ---")
             source_folder_to_move = current_processing_subdir
             destination_parent_folder = success_move_target_dir
             
             try:
-                print(f"    准备将 '{os.path.basename(source_folder_to_move)}' 移动到 '{os.path.basename(destination_parent_folder)}' 文件夹中...")
+                print(f"    Preparing to move '{os.path.basename(source_folder_to_move)}' into folder '{os.path.basename(destination_parent_folder)}'...")
                 shutil.move(source_folder_to_move, destination_parent_folder)
                 moved_path = os.path.join(destination_parent_folder, os.path.basename(source_folder_to_move))
-                print(f"    成功移动文件夹至: {moved_path}")
+                print(f"    Successfully moved folder to: {moved_path}")
             except Exception as e:
-                print(f"    错误: 移动文件夹 '{os.path.basename(source_folder_to_move)}' 失败: {e}")
+                print(f"    Error: Failed to move folder '{os.path.basename(source_folder_to_move)}': {e}")
                 if subdir_name not in failed_subdirs_list:
-                    failed_subdirs_list.append(f"{subdir_name} (移动失败)")
+                    failed_subdirs_list.append(f"{subdir_name} (Move failed)")
             
         else:
-            print(f"  项目文件夹 '{subdir_name}' 未能成功生成PDF。将保留中间文件和原始文件夹。")
+            print(f"  Project folder '{subdir_name}' did not successfully generate a PDF. Intermediate files and original folder retained.")
             failed_subdirs_list.append(subdir_name)
 
-        print(f"{'='*10} 项目文件夹 '{subdir_name}' 处理完毕 {'='*10}")
-        print_progress_bar(i + 1, total_subdirs_to_process, prefix="总进度:", suffix='完成', length=40)
+        print(f"{'='*10} Project folder '{subdir_name}' processing complete {'='*10}")
+        print_progress_bar(i + 1, total_subdirs_to_process, prefix="Total progress:", suffix='Done', length=40)
 
     print("\n" + "=" * 70)
-    print("【任务总结报告】")
+    print("[Task Summary Report]")
     print("-" * 70)
     
     success_count = total_subdirs_to_process - len(failed_subdirs_list)
     
-    print(f"总计处理项目 (一级子文件夹): {total_subdirs_to_process} 个")
-    print(f"  - ✅ 成功: {success_count} 个")
-    print(f"  - ❌ 失败: {len(failed_subdirs_list)} 个")
+    print(f"Total projects processed (top-level subfolders): {total_subdirs_to_process}")
+    print(f"  - ✅ Success: {success_count}")
+    print(f"  - ❌ Failed: {len(failed_subdirs_list)}")
     
     if failed_subdirs_list:
-        print("\n失败项目列表 (已保留在原位):")
+        print("\nFailed projects (retained in place):")
         for failed_dir in failed_subdirs_list:
             print(f"  - {failed_dir}")
     
     print("-" * 70)
-    print(f"所有成功生成的PDF文件（如有）已保存在: {overall_pdf_output_dir}")
-    print(f"所有成功处理的原始项目文件夹（如有）已移至: {success_move_target_dir}")
-    print("脚本执行完毕。")
+    print(f"All successfully generated PDF files (if any) are saved in: {overall_pdf_output_dir}")
+    print(f"All successfully processed original project folders (if any) have been moved to: {success_move_target_dir}")
+    print("Script execution complete.")

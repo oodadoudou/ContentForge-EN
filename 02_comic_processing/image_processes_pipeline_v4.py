@@ -10,37 +10,37 @@ import time
 try:
     import numpy as np
 except ImportError:
-    print("错误：此脚本需要 numpy 库。请使用 'pip install numpy' 命令进行安装。")
+    print("Error: This script requires the numpy library. Please install it with 'pip install numpy'.")
     sys.exit(1)
 
-# --- 全局配置 ---
+# --- Global Settings ---
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 Image.MAX_IMAGE_PIXELS = None
 
-# --- 目录与文件名配置 ---
+# --- Directory and Filename Settings ---
 MERGED_LONG_IMAGE_SUBDIR_NAME = "merged_long_img"
 SPLIT_IMAGES_SUBDIR_NAME = "split_by_solid_band"
-SUCCESS_MOVE_SUBDIR_NAME = "IMG"  # 成功处理的文件夹将被移动到此目录
+SUCCESS_MOVE_SUBDIR_NAME = "IMG"  # Successfully processed folders will be moved to this directory
 LONG_IMAGE_FILENAME_BASE = "stitched_long_strip"
 IMAGE_EXTENSIONS_FOR_MERGE = ('.png', '.jpg', '.jpeg', '.webp', '.bmp', '.gif', '.tiff', '.tif')
 
-# ▼▼▼ V4 核心分割逻辑配置 (两阶段色彩同质性分析) ▼▼▼
+# ▼▼▼ V4 Core Split Configuration (Two-stage color homogeneity analysis) ▼▼▼
 QUANTIZATION_FACTOR = 32
 MAX_UNIQUE_COLORS_IN_BG = 5
 MIN_SOLID_COLOR_BAND_HEIGHT = 30
 EDGE_MARGIN_PERCENT = 0.10
 
-# --- 重打包与PDF输出配置 ---
+# --- Repack and PDF Output Settings ---
 MAX_REPACKED_FILESIZE_MB = 8
 MAX_REPACKED_PAGE_HEIGHT_PX = 30000
 PDF_TARGET_PAGE_WIDTH_PIXELS = 1500
 PDF_IMAGE_JPEG_QUALITY = 90
 PDF_DPI = 300
-# --- 配置结束 ---
+# --- End of Settings ---
 
 
 def print_progress_bar(iteration, total, prefix='', suffix='', decimals=1, length=50, fill='█', print_end="\r"):
-    """在终端打印进度条。"""
+    """Prints a progress bar in the terminal."""
     if total == 0:
         percent_str = "0.0%"
         filled_length = 0
@@ -58,16 +58,16 @@ def print_progress_bar(iteration, total, prefix='', suffix='', decimals=1, lengt
 
 
 def merge_to_long_image(source_project_dir, output_long_image_dir, long_image_filename_only, target_width):
-    """将源目录中的所有图片（包括子目录）垂直合并成一个标准宽度的PNG长图。"""
-    print(f"\n  --- 步骤 1: 合并项目 '{os.path.basename(source_project_dir)}' 的图片至标准宽度 {target_width}px ---")
+    """Vertically merges all images (including subdirectories) into a PNG long image of standard width."""
+    print(f"\n  --- Step 1: Merge images in project '{os.path.basename(source_project_dir)}' to standard width {target_width}px ---")
     if not os.path.isdir(source_project_dir):
-        print(f"    错误: 源项目目录 '{source_project_dir}' 未找到。")
+        print(f"    Error: Source project directory '{source_project_dir}' not found.")
         return None
 
     os.makedirs(output_long_image_dir, exist_ok=True)
     output_long_image_path = os.path.join(output_long_image_dir, long_image_filename_only)
     
-    print(f"    ... 正在递归扫描 '{os.path.basename(source_project_dir)}' 及其所有子文件夹以查找图片 ...")
+    print(f"    ... Recursively scanning '{os.path.basename(source_project_dir)}' and all subfolders for images ...")
     image_filepaths = []
     try:
         for dirpath, _, filenames in os.walk(source_project_dir):
@@ -77,16 +77,16 @@ def merge_to_long_image(source_project_dir, output_long_image_dir, long_image_fi
                 if filename.lower().endswith(IMAGE_EXTENSIONS_FOR_MERGE) and not filename.startswith('.'):
                     image_filepaths.append(os.path.join(dirpath, filename))
     except Exception as e:
-        print(f"    错误: 扫描目录 '{source_project_dir}' 时发生错误: {e}")
+        print(f"    Error: An error occurred while scanning directory '{source_project_dir}': {e}")
         return None
 
     if not image_filepaths:
-        print(f"    在 '{os.path.basename(source_project_dir)}' 及其子目录中未找到符合条件的图片。")
+        print(f"    No eligible images found in '{os.path.basename(source_project_dir)}' or its subdirectories.")
         return None
 
     sorted_image_filepaths = natsort.natsorted(image_filepaths)
     images_data, total_height = [], 0
-    print_progress_bar(0, len(sorted_image_filepaths), prefix='    分析并计算尺寸:', suffix='完成', length=40)
+    print_progress_bar(0, len(sorted_image_filepaths), prefix='    Analyzing and computing sizes:', suffix='Done', length=40)
     for i, filepath in enumerate(sorted_image_filepaths):
         try:
             with Image.open(filepath) as img:
@@ -94,17 +94,17 @@ def merge_to_long_image(source_project_dir, output_long_image_dir, long_image_fi
                 images_data.append({"path": filepath, "new_height": new_height})
                 total_height += new_height
         except Exception as e:
-            print(f"\n    警告: 打开或读取图片 '{os.path.basename(filepath)}' 失败: {e}。已跳过。")
+            print(f"\n    Warning: Failed to open or read image '{os.path.basename(filepath)}': {e}. Skipped.")
             continue
-        print_progress_bar(i + 1, len(sorted_image_filepaths), prefix='    分析并计算尺寸:', suffix='完成', length=40)
+        print_progress_bar(i + 1, len(sorted_image_filepaths), prefix='    Analyzing and computing sizes:', suffix='Done', length=40)
 
     if not images_data or target_width <= 0 or total_height <= 0:
-        print(f"    计算得到的画布尺寸异常 ({target_width}x{total_height})，无法创建长图。")
+        print(f"    Computed canvas size is invalid ({target_width}x{total_height}); cannot create long image.")
         return None
 
     merged_canvas = Image.new('RGB', (target_width, total_height), (255, 255, 255))
     current_y_offset = 0
-    print_progress_bar(0, len(images_data), prefix='    粘贴图片:    ', suffix='完成', length=40)
+    print_progress_bar(0, len(images_data), prefix='    Pasting images:    ', suffix='Done', length=40)
     for i, item_info in enumerate(images_data):
         try:
             with Image.open(item_info["path"]) as img:
@@ -113,20 +113,20 @@ def merge_to_long_image(source_project_dir, output_long_image_dir, long_image_fi
                 merged_canvas.paste(img_to_paste, (0, current_y_offset))
                 current_y_offset += item_info['new_height']
         except Exception as e:
-            print(f"\n    警告: 粘贴图片 '{item_info['path']}' 失败: {e}。")
-        print_progress_bar(i + 1, len(images_data), prefix='    粘贴图片:    ', suffix='完成', length=40)
+            print(f"\n    Warning: Failed to paste image '{item_info['path']}': {e}.")
+        print_progress_bar(i + 1, len(images_data), prefix='    Pasting images:    ', suffix='Done', length=40)
 
     try:
         merged_canvas.save(output_long_image_path, format='PNG')
-        print(f"    成功合并图片到: {output_long_image_path}")
+        print(f"    Successfully merged images to: {output_long_image_path}")
         return output_long_image_path
     except Exception as e:
-        print(f"    错误: 保存合并后的长图失败: {e}")
+        print(f"    Error: Failed to save merged long image: {e}")
         return None
 
 # ▼▼▼ V4 核心函数 - 两阶段色彩同质性分析 ▼▼▼
 def get_dominant_color_numpy(pixels_quantized):
-    """[V4 性能核心] 使用纯NumPy从量化后的像素块中找到主色调。"""
+    """[V4 performance core] Use pure NumPy to find the dominant color from quantized pixel blocks."""
     if pixels_quantized.size == 0:
         return None, 0
     pixels_list = pixels_quantized.reshape(-1, 3)
@@ -139,12 +139,12 @@ def get_dominant_color_numpy(pixels_quantized):
 
 def split_long_image_v4(long_image_path, output_split_dir, quantization_factor, max_unique_colors, min_band_height, edge_margin_percent):
     """
-    [V4 核心逻辑] 通过两阶段向量化分析来识别和分割图像，实现极致速度。
+    [V4 core logic] Identifies and splits the image via two-stage vectorized analysis for high speed.
     """
-    print(f"\n  --- 步骤 2 (V4 - 两阶段极速分析): 分割长图 '{os.path.basename(long_image_path)}' ---")
+    print(f"\n  --- Step 2 (V4 - two-stage fast analysis): Split long image '{os.path.basename(long_image_path)}' ---")
     start_time = time.time()
     if not os.path.isfile(long_image_path):
-        print(f"    错误: 长图路径 '{long_image_path}' 未找到。")
+        print(f"    Error: Long image path '{long_image_path}' not found.")
         return []
 
     os.makedirs(output_split_dir, exist_ok=True)
@@ -153,24 +153,24 @@ def split_long_image_v4(long_image_path, output_split_dir, quantization_factor, 
         with Image.open(long_image_path) as img:
             img_rgb = img.convert("RGB")
             img_width, img_height = img_rgb.size
-            if img_height < min_band_height * 3: # 如果图片太短，没必要分割
-                print("    图片太短，无需分割。")
+            if img_height < min_band_height * 3: # If the image is too short, splitting is unnecessary
+                print("    Image too short; no need to split.")
                 dest_path = os.path.join(output_split_dir, os.path.basename(long_image_path))
                 shutil.copy2(long_image_path, dest_path)
                 return [dest_path]
 
-            print(f"    分析一个 {img_width}x{img_height} 的图片...")
-            print("    [1/3] 色彩量化...")
+            print(f"    Analyzing an image of {img_width}x{img_height}...")
+            print("    [1/3] Color quantization...")
             quantized_array = np.array(img_rgb) // quantization_factor
             
             margin_width = int(img_width * edge_margin_percent)
             center_start, center_end = margin_width, img_width - margin_width
 
-            # --- [V4 核心优化 1: 快速筛选阶段] ---
-            print("    [2/3] 快速筛选候选行...")
+            # --- [V4 Core Optimization 1: Fast candidate screening] ---
+            print("    [2/3] Fast screening of candidate rows...")
             candidate_indices = []
             candidate_dominant_colors = {}
-            # 依然逐行，但只做最快的中心区域分析
+            # Still per-row, but only analyze the fastest center region
             for y in range(img_height):
                 center_pixels = quantized_array[y, center_start:center_end]
                 dominant_color, color_count = get_dominant_color_numpy(center_pixels)
@@ -179,15 +179,15 @@ def split_long_image_v4(long_image_path, output_split_dir, quantization_factor, 
                     candidate_dominant_colors[y] = dominant_color
             
             if not candidate_indices:
-                print("    未能找到任何候选行，无需分割。")
+                print("    No candidate rows found; no split needed.")
                 dest_path = os.path.join(output_split_dir, os.path.basename(long_image_path))
                 shutil.copy2(long_image_path, dest_path)
                 return [dest_path]
 
-            # --- [V4 核心优化 2: 精准验证阶段] ---
-            print(f"    [3/3] 从 {len(candidate_indices)} 个候选行中精准验证边缘...")
+            # --- [V4 Core Optimization 2: Precise edge verification] ---
+            print(f"    [3/3] Precisely verifying edges across {len(candidate_indices)} candidate rows...")
             row_types = np.full(img_height, 'complex', dtype=object)
-            # 只对少数候选行进行耗时的边缘分析
+            # Perform expensive edge analysis only for a small number of candidate rows
             for y in candidate_indices:
                 center_dominant_color = candidate_dominant_colors[y]
                 
@@ -206,9 +206,9 @@ def split_long_image_v4(long_image_path, output_split_dir, quantization_factor, 
                 row_types[y] = 'simple'
             
             analysis_duration = time.time() - start_time
-            print(f"    分析完成，耗时: {analysis_duration:.2f} 秒。")
+            print(f"    Analysis completed in: {analysis_duration:.2f} seconds.")
 
-            # --- 后续的切块与保存逻辑 ---
+            # --- Subsequent block detection and saving logic ---
             blocks, last_y = [], 0
             change_points = np.where(row_types[:-1] != row_types[1:])[0] + 1
             for y_change in change_points:
@@ -220,7 +220,7 @@ def split_long_image_v4(long_image_path, output_split_dir, quantization_factor, 
             part_index, last_cut_y, cut_found = 1, 0, False
             split_image_paths = []
             
-            print(f"    正在从 {len(blocks)} 个内容/空白区块中寻找切割点...")
+            print(f"    Searching cut points among {len(blocks)} content/blank blocks...")
             for i, block in enumerate(blocks):
                 if block['type'] == 'simple' and (block['end'] - block['start']) >= min_band_height:
                     if i > 0 and i < len(blocks) - 1:
@@ -231,7 +231,7 @@ def split_long_image_v4(long_image_path, output_split_dir, quantization_factor, 
                         output_filepath = os.path.join(output_split_dir, output_filename)
                         segment.save(output_filepath, "PNG")
                         split_image_paths.append(output_filepath)
-                        print(f"      在 Y={cut_point_y} 处找到合格空白区，已切割并保存: {output_filename}")
+                        print(f"      Found eligible blank area at Y={cut_point_y}; split and saved: {output_filename}")
                         part_index += 1
                         last_cut_y = cut_point_y
 
@@ -242,25 +242,25 @@ def split_long_image_v4(long_image_path, output_split_dir, quantization_factor, 
             split_image_paths.append(output_filepath)
             
             if not cut_found:
-                print("\n    [V4 诊断报告] 未能找到任何合格的空白区进行分割。")
-                print(f"    建议检查参数: MAX_UNIQUE_COLORS_IN_BG={max_unique_colors}, MIN_SOLID_COLOR_BAND_HEIGHT={min_band_height}")
+                print("\n    [V4 Diagnostic Report] No eligible blank areas found for splitting.")
+                print(f"    Consider checking parameters: MAX_UNIQUE_COLORS_IN_BG={max_unique_colors}, MIN_SOLID_COLOR_BAND_HEIGHT={min_band_height}")
                 if len(split_image_paths) == 1:
                     os.remove(split_image_paths[0])
                 dest_path = os.path.join(output_split_dir, os.path.basename(long_image_path))
                 shutil.copy2(long_image_path, dest_path)
-                print("    由于未执行任何分割，已将原图复制到输出目录。")
+                print("    Since no splits were performed, the original image was copied to the output directory.")
                 return [dest_path]
 
             return natsort.natsorted(split_image_paths)
 
     except Exception as e:
-        print(f"    分割图片 '{os.path.basename(long_image_path)}' 时发生严重错误: {e}")
+        print(f"    Critical error while splitting image '{os.path.basename(long_image_path)}': {e}")
         traceback.print_exc()
         return []
 
 
 def _merge_image_list_for_repack(image_paths, output_path):
-    """一个专门用于重打包的内部合并函数。"""
+    """Internal merge function specifically for repacking."""
     if not image_paths: return False
     images_data, total_height, target_width = [], 0, 0
     for path in image_paths:
@@ -282,10 +282,10 @@ def _merge_image_list_for_repack(image_paths, output_path):
 
 
 def repack_split_images(split_image_paths, output_dir, base_filename, max_size_mb, max_height_px):
-    """按“双重限制”重新打包分割后的图片。"""
-    print(f"\n  --- 步骤 2.5: 按双重限制重打包 (上限: {max_size_mb}MB, {max_height_px}px) ---")
+    """Repack split images under 'dual constraints'."""
+    print(f"\n  --- Step 2.5: Repack under dual constraints (limits: {max_size_mb}MB, {max_height_px}px) ---")
     if not split_image_paths or len(split_image_paths) <= 1:
-        print("    仅有1个或没有图片块，无需重打包。")
+        print("    Only one or no image block present; repacking not needed.")
         return split_image_paths
 
     max_size_bytes = max_size_mb * 1024 * 1024
@@ -298,7 +298,7 @@ def repack_split_images(split_image_paths, output_dir, base_filename, max_size_m
             file_size = os.path.getsize(img_path)
             with Image.open(img_path) as img: img_height = img.height
         except Exception as e:
-            print(f"\n    警告: 无法读取图片 '{os.path.basename(img_path)}' 的属性: {e}")
+            print(f"\n    Warning: Unable to read attributes of image '{os.path.basename(img_path)}': {e}")
             continue
         
         if current_bucket_paths and ((current_bucket_size + file_size > max_size_bytes) or (current_bucket_height + img_height > max_height_px)):
@@ -319,8 +319,8 @@ def repack_split_images(split_image_paths, output_dir, base_filename, max_size_m
         if _merge_image_list_for_repack(current_bucket_paths, output_path):
             repacked_paths.append(output_path)
     
-    print(f"    重打包完成，共生成 {len(repacked_paths)} 个新的图片块。")
-    print("    ... 正在清理原始分割文件 ...")
+    print(f"    Repack complete; generated {len(repacked_paths)} new image block(s).")
+    print("    ... Cleaning up original split files ...")
     original_files_to_clean = [p for p in split_image_paths if p not in repacked_paths]
     for path in original_files_to_clean:
         if os.path.exists(path): os.remove(path)
@@ -329,10 +329,10 @@ def repack_split_images(split_image_paths, output_dir, base_filename, max_size_m
 
 
 def create_pdf_from_images(image_paths_list, output_pdf_dir, pdf_filename_only):
-    """从图片列表创建PDF。"""
-    print(f"\n  --- 步骤 3: 从图片片段创建 PDF '{pdf_filename_only}' ---")
+    """Create a PDF from a list of images."""
+    print(f"\n  --- Step 3: Create PDF '{pdf_filename_only}' from image fragments ---")
     if not image_paths_list:
-        print("    没有图片可用于创建 PDF。")
+        print("    No images available to create a PDF.")
         return None
 
     safe_image_paths = []
@@ -340,11 +340,11 @@ def create_pdf_from_images(image_paths_list, output_pdf_dir, pdf_filename_only):
         try:
             with Image.open(image_path) as img:
                 if img.height > 65500 or img.width > 65500:
-                    print(f"\n    警告: 图片 '{os.path.basename(image_path)}' 尺寸过大，已跳过。")
+                    print(f"\n    Warning: Image '{os.path.basename(image_path)}' is too large; skipped.")
                 else:
                     safe_image_paths.append(image_path)
         except Exception as e:
-            print(f"    警告: 无法打开图片 '{image_path}' 进行尺寸检查: {e}")
+            print(f"    Warning: Unable to open image '{image_path}' for size check: {e}")
     
     if not safe_image_paths: return None
 
@@ -356,31 +356,31 @@ def create_pdf_from_images(image_paths_list, output_pdf_dir, pdf_filename_only):
 
     try:
         images_for_pdf[0].save(pdf_full_path, save_all=True, append_images=images_for_pdf[1:], resolution=float(PDF_DPI), quality=PDF_IMAGE_JPEG_QUALITY, optimize=True)
-        print(f"    成功创建 PDF: {pdf_full_path}")
+        print(f"    Successfully created PDF: {pdf_full_path}")
         return pdf_full_path
     finally:
         for img_obj in images_for_pdf: img_obj.close()
 
 
 def cleanup_intermediate_dirs(long_img_dir, split_img_dir):
-    """清理中间文件目录。"""
-    print(f"\n  --- 步骤 4: 清理中间文件 ---")
+    """Clean up intermediate file directories."""
+    print(f"\n  --- Step 4: Clean up intermediate files ---")
     for dir_path in [long_img_dir, split_img_dir]:
         if os.path.isdir(dir_path):
             try:
                 shutil.rmtree(dir_path)
-                print(f"    已删除中间文件夹: {dir_path}")
+                print(f"    Deleted intermediate folder: {dir_path}")
             except Exception as e:
-                print(f"    删除文件夹 '{dir_path}' 失败: {e}")
+                print(f"    Failed to delete folder '{dir_path}': {e}")
 
 
 if __name__ == "__main__":
-    print("自动化图片批量处理流程 (V4 - 两阶段极速版)")
-    print("工作流程: 1.合并 -> 2.分割 -> 2.5.重打包 -> 3.创建PDF -> 4.清理 -> 5.移动成功项")
+    print("Automated Image Batch Processing Workflow (V4 - Two-stage fast edition)")
+    print("Workflow: 1.Merge -> 2.Split -> 2.5.Repack -> 3.Create PDF -> 4.Cleanup -> 5.Move successful items")
     print("-" * 70)
     
     def load_default_path_from_settings():
-        """从共享设置文件中读取默认工作目录。"""
+        """Read default work directory from shared settings file."""
         try:
             script_dir = os.path.dirname(os.path.abspath(__file__))
             settings_path = os.path.join(script_dir, 'shared_assets', 'settings.json')
@@ -395,22 +395,22 @@ if __name__ == "__main__":
     root_input_dir = ""
     while True:
         prompt_message = (
-            f"请输入包含一个或多个项目子文件夹的【根目录】路径。\n"
-            f"脚本将递归处理每个项目子文件夹中的所有图片。\n"
-            f"(直接按 Enter 键将使用默认路径: '{default_root_dir_name}'): "
+            f"Please enter the [root directory] path containing one or more project subfolders.\n"
+            f"The script will recursively process all images in each project subfolder.\n"
+            f"(Press Enter to use the default path: '{default_root_dir_name}'): "
         )
         user_provided_path = input(prompt_message).strip()
         current_path_to_check = user_provided_path if user_provided_path else default_root_dir_name
         if not user_provided_path:
-            print(f"使用默认路径: {current_path_to_check}")
+            print(f"Using default path: {current_path_to_check}")
 
         abs_path_to_check = os.path.abspath(current_path_to_check)
         if os.path.isdir(abs_path_to_check):
             root_input_dir = abs_path_to_check
-            print(f"已选定根处理目录: {root_input_dir}")
+            print(f"Selected root processing directory: {root_input_dir}")
             break
         else:
-            print(f"错误: 路径 '{abs_path_to_check}' 不是一个有效的目录或不存在。")
+            print(f"Error: Path '{abs_path_to_check}' is not a valid directory or does not exist.")
 
     # 根据根目录名称创建唯一的PDF输出文件夹
     root_dir_basename = os.path.basename(os.path.abspath(root_input_dir))

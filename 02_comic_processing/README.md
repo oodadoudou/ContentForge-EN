@@ -1,106 +1,100 @@
 ============================================================
-模块二: 漫画处理流程 (02_comic_processing)
+Module 02: Comic Processing Workflow (02_comic_processing)
 ============================================================
-【简介】
-本模块的核心功能是提供一个自动化的图片处理流水线，旨在将
-包含序列图片的文件夹（如漫画章节）批量转换为经过优化的、
-适合阅读的 PDF 文件。
+[Overview]
+This module provides an automated image-processing pipeline that batch converts
+folders containing sequential images (e.g., comic chapters) into optimized,
+reader-friendly PDF files.
 
-【核心脚本】
+[Core Scripts]
 
-🌟 image_processes_pipeline_v5.py (⭐⭐⭐ 特别推荐！智能融合版，双重保障)
-image_processes_pipeline_v2.py (⭐ 推荐快速流程,适配绝大多数情况)
-image_processes_pipeline_v3.py (智能流程)
-image_processes_pipeline_v4.py (实验流程)
-convert_img_to_pdf.py (直接转换工具)
-merge_pdfs.py (PDF合并工具)
-convert_long_pdf.py (PDF转图片工具)
+🌟 image_processes_pipeline_v5.py (Highly recommended — Intelligent Hybrid, dual assurance)
+image_processes_pipeline_v2.py (Recommended quick pipeline — works in most cases)
+image_processes_pipeline_v3.py (Intelligent pipeline)
+image_processes_pipeline_v4.py (Experimental pipeline)
+convert_img_to_pdf.py (Direct conversion tool)
+merge_pdfs.py (PDF merging tool)
+convert_long_pdf.py (PDF-to-images tool)
 
-【使用方法】
-本模块的所有功能都已整合到项目根目录的 main.py 交互式菜单中。
+[Usage]
+All functionality in this module is integrated into the interactive menu of
+the project’s root `main.py`.
 
-在终端中，进入 ContentForge 根目录，运行 `python main.py`。
+In a terminal, navigate to the ContentForge root directory and run `python main.py`.
 
-在主菜单选择 "2. 漫画处理与生成"，然后根据菜单提示进行操作。
+From the main menu choose "2. Comic Processing & Generation" and follow the prompts.
 
---------------------- 功能与用法详解 ---------------------
+---------------------- Features and Usage Details ---------------------
 
-🌟 [V5 智能融合流程] 双重保障分割 + 自动切换 + + + (特别推荐！)
+🌟 [V5 Intelligent Hybrid Pipeline] Dual-assurance splitting + auto switching (highly recommended)
 
-这是最新的智能融合版本，结合了 V2 和 V4 的优点，提供双重保障的
-分割策略，确保在各种复杂情况下都能成功处理图片。
+This is the latest intelligent hybrid version. It combines the strengths of V2 and V4,
+providing a dual-assurance splitting strategy that succeeds across complex scenarios.
 
-【智能双重策略】
-1. 首先尝试 V2 传统纯色带分析方法（适合大多数标准条漫）
-2. 如果 V2 的PDF创建失败，自动切换到 V4 两阶段极速分析方法（适合复杂背景）
-3. 无需用户手动选择或重新运行，一次执行即可获得最佳结果
+[Intelligent Dual Strategy]
+1. Try V2’s traditional solid-band analysis first (suitable for most standard webtoons)
+2. If V2’s PDF creation fails, automatically switch to V4’s two-stage high-speed analysis (better for complex backgrounds)
+3. No manual choice or rerun needed — a single execution yields the best result
 
-【核心优势】
-  - **省时省力**: 无需在 V2 失败后手动启动 V4 查漏补缺
-  - **精准失败判定**: 以PDF创建成功与否作为最终判定标准，确保输出质量
-  - **双重保障**: 结合两种分割算法的优势，大幅提高成功率
-  - **用户友好**: 清晰的进度提示和状态反馈，易于理解处理过程
-  - **独立运行**: 可单独调用，不依赖整个项目结构
+[Key Advantages]
+  - Time-saving: No need to manually launch V4 when V2 struggles
+  - Precise failure criterion: Final judgment is based on whether PDF creation succeeds, ensuring output quality
+  - Dual assurance: Combines two algorithms to significantly increase success rate
+  - User-friendly: Clear progress and status updates that make the process easy to follow
+  - Stand-alone: Can be called independently; does not depend on the entire project structure
 
-【适用场景】
-适用于所有类型的条漫处理，特别是：
-  - 背景复杂、传统方法难以处理的图片
-  - 需要高成功率的批量处理任务
-  - 对处理效率有较高要求的场景
+[Use Cases]
+Suitable for all webtoon processing tasks, especially:
+  - Images with complex backgrounds where traditional methods struggle
+  - Batch jobs requiring a high success rate
+  - Scenarios with strong efficiency requirements
 
-【技术特色】
-  - **V2 传统优势**: 精确的纯色带识别，适合标准白/黑背景分割
-  - **V4 极速优势**: 两阶段色彩同质性分析，处理复杂背景更高效
-  - **智能融合**: 自动选择最适合的分割方法，无需人工干预
-  - **错误恢复**: V2失败时自动清理分割文件，重新使用V4方式处理
+[Technical Highlights]
+  - V2 traditional strengths: Accurate solid-band detection for standard white/black backgrounds
+  - V4 high-speed strengths: Two-stage color homogeneity analysis that efficiently handles complex backgrounds
+  - Intelligent hybrid: Automatically chooses the most suitable method; no manual intervention
+  - Error recovery: Automatically cleans V2 outputs and retries with V4 when V2 fails
 
-[V3 智能流程] 合并、分割、重打包并生成 PDF + + +
+[V3 Intelligent Pipeline] Merge, split, repack, and generate PDF
 
-这是最核心、最推荐的流程。它能一站式地将杂乱的图片文件
-夹处理成精美的、适合分享的PDF。
+This is the most central, highly recommended pipeline. It turns a messy image
+folder into a polished, shareable PDF in one workflow.
 
-【自动化处理步骤】
-1. 合并长图 -> 2. 智能分割 -> 3. 按大小重打包 -> 4. 生成PDF
+[Automated Steps]
+1. Merge long image -> 2. Intelligent split -> 3. Repack by size -> 4. Generate PDF
 
-【适用场景】
-适用于大多数在线阅读的条漫，能智能地去除拼接时产生的边框，
-并将分割后的内容打包成大小适中的图片块，便于网络传输和阅读。
+[Use Cases]
+Ideal for most webtoons intended for online reading. It smartly removes borders
+introduced during stitching and repacks split content into reasonably sized image blocks
+for faster transmission and comfortable reading.
 
-【核心技术】
+[Core Techniques]
 
-  - **无边框合并**: 在流程第一步即统一所有图片宽度，从根本上
-    避免了因尺寸不一导致的白边或黑边问题。
-  - **颜色方差分割**: 采用先进的“颜色方差”分析法，通过计算每
-    一行像素颜色的离散程度来区分“内容”与“空白”，能够极其
-    精确地识别出真正的空白区域（包括带有噪点或纹理的背景），
-    同时避免在对话框等稀疏内容处发生错误切割。
-  - **高质量输出**: 整个流程只进行一次高质量缩放，并以较高的
-    JPEG 质量（95）存入PDF，确保最终成品清晰锐利。
-  - **NumPy 加速**: 分割算法的核心由 NumPy 驱动，利用其高效的
-    向量化计算能力，极大地提升了处理速度。
+  - Borderless merging: Unifies image widths at step one, fundamentally avoiding white/black border issues caused by size differences.
+  - Color-variance splitting: Uses advanced “color variance” analysis. By computing the dispersion of pixel colors per row, it accurately distinguishes “content” from “blank”, even for noisy or textured backgrounds, and avoids erroneous cuts in sparse areas like speech bubbles.
+  - High-quality output: Performs a single high-quality resize and stores into the PDF with a relatively high JPEG quality (95) for sharp results.
+  - NumPy acceleration: The core of the split algorithm is powered by NumPy’s efficient vectorized computations to greatly improve processing speed.
 
-[快速转换] 将图片文件夹直接转为PDF + + +
+[Quick Conversion] Convert an image folder directly to PDF
 
-  - **对应脚本**: convert_img_to_pdf.py
-  - **功能**: 这是一个简单直接的转换工具。它会扫描根目录下所有
-    包含图片的子文件夹，并将【每一个】子文件夹直接转换成一个
-    对应的 PDF 文件。
-  - **【处理逻辑】**: 不会进行任何合并或分割操作。文件夹内的 N 张
-    图片会直接变成 PDF 的 N 个页面。
-  - **【适用场景】**:
-      - 当你的图片本身已经是分好页的（例如扫描版书籍）。
-      - 你不希望脚本对图片进行任何拼接或裁剪，只想快速生成PDF。
+  - Script: convert_img_to_pdf.py
+  - Function: A simple and direct conversion tool. It scans all subfolders under the root
+    that contain images and converts each subfolder directly into a corresponding PDF.
+  - Processing logic: No merging or splitting. The N images in a folder become N pages in the PDF.
+  - Use cases:
+      - When the images are already paginated (e.g., scanned books).
+      - When you don’t want any stitching or cropping — just quickly produce a PDF.
 
-[PDF 转图片] 将 PDF 转换为图片 (支持长图分割) + + +
+[PDF to Images] Convert PDFs back to images (supports long-page splitting)
 
-  - **对应脚本**: convert_long_pdf.py
-  - **功能**: 此工具用于将 PDF 文件转换回序列图片。
-  - **【处理逻辑】**:
-      - 自动扫描指定目录下的所有 PDF 文件。
-      - 将每一个 PDF 的每一页都转换为一张图片。
-      - **核心功能**: 如果 PDF 中的某一页是超长图（例如条漫），脚本会自动将其切割成多个高度适中的部分，并按顺序命名 (e.g., `..._part_01.png`, `..._part_02.png`)。
-      - 每个原始 PDF 转换出的图片都会被保存在以该 PDF 命名的独立子文件夹中，方便管理。
-  - **【适用场景】**:
-      - 当你需要从 PDF 格式的文件中提取原始图片时。
-      - 特别适用于处理包含超长条漫页面的 PDF，可以将其还原为适合处理的短图片序列。
-      - 作为其他处理流程的预处理步骤，例如，先从 PDF 提取图片，进行编辑后，再用本模块的其他工具重新生成新的 PDF。
+  - Script: convert_long_pdf.py
+  - Function: Converts PDF files back into sequential images.
+  - Processing logic:
+      - Automatically scans the specified directory for all PDFs.
+      - Converts every page of each PDF into an image.
+      - Core feature: If a PDF page is a long strip (e.g., webtoon), the script automatically splits it into multiple height-appropriate parts, named in order (e.g., `..._part_01.png`, `..._part_02.png`).
+      - All images converted from a PDF are saved in their own subfolder named after the PDF for easy organization.
+  - Use cases:
+      - Extracting source images from PDF files.
+      - Especially useful for PDFs containing long webtoon pages, restoring them into shorter images for further processing.
+      - A pre-processing step for other workflows — for example, extract images, edit them, then use this module’s tools to regenerate a new PDF.
