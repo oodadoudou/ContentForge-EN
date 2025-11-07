@@ -7,7 +7,7 @@ import xml.etree.ElementTree as ET
 import json
 
 def sanitize_filename(name):
-    """移除字符串中的非法字符，使其成为有效的文件名。"""
+    """Remove illegal characters from a string to make a valid filename."""
     invalid_chars = r'<>:"/\|?*'
     if name:
         for char in invalid_chars:
@@ -16,7 +16,7 @@ def sanitize_filename(name):
     return "Untitled"
 
 def get_unique_filepath(path):
-    """检查文件路径是否存在。如果存在，则附加一个数字使其唯一。"""
+    """Check if a file path exists; append a number to make it unique if needed."""
     if not os.path.exists(path):
         return path
     directory, filename = os.path.split(path)
@@ -29,9 +29,9 @@ def get_unique_filepath(path):
             return new_path
         counter += 1
 
-# --- 新增：函数用于从 settings.json 加载默认路径 ---
+# --- Added: Load default path from settings.json ---
 def load_default_path_from_settings():
-    """从共享设置文件中读取默认工作目录。"""
+    """Read default working directory from the shared settings file."""
     try:
         project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         settings_path = os.path.join(project_root, 'shared_assets', 'settings.json')
@@ -44,41 +44,41 @@ def load_default_path_from_settings():
 
 def run_epub_modifier_v8_final():
     """
-    v8: 最终版。所有文件都会被处理，跳过的文件使用其原始元数据标题命名。
+    v8: Final version. All files will be processed; skipped files use their original metadata title.
     """
     print("=====================================================")
-    print("=     EPUB 修改脚本 (v8 - 最终完整处理版)     =")
+    print("=     EPUB Rename Tool (v8 - Final full processing)     =")
     print("=====================================================")
-    print("功能：")
-    print("  - 所有扫描到的文件都将被处理并放入 'processed_files' 文件夹。")
-    print("  - 输入新标题将使用新标题命名。")
-    print("  - 直接回车将使用书籍自身的元数据标题命名。")
+    print("Features:")
+    print("  - All scanned files will be processed and placed in the 'processed_files' folder.")
+    print("  - Entering a new title uses that title for the filename.")
+    print("  - Pressing Enter uses the book's own metadata title.")
 
     # --- 修改：动态加载默认路径 ---
     default_path = load_default_path_from_settings()
-    folder_path = input(f"\n请输入 EPUB 文件夹路径 (默认为: {default_path}): ").strip() or default_path
+    folder_path = input(f"\nEnter the folder path containing EPUB files (default: {default_path}): ").strip() or default_path
 
     if not os.path.isdir(folder_path):
-        sys.exit(f"\n错误：文件夹 '{folder_path}' 不存在。")
+        sys.exit(f"\nError: Folder '{folder_path}' does not exist.")
 
     processed_folder_path = os.path.join(folder_path, "processed_files")
     os.makedirs(processed_folder_path, exist_ok=True)
 
     epub_files = sorted([f for f in os.listdir(folder_path) if f.lower().endswith('.epub')])
     if not epub_files:
-        sys.exit(f"在 '{folder_path}' 中未找到 EPUB 文件。")
+        sys.exit(f"No EPUB files found in '{folder_path}'.")
         
-    print("\n找到以下待处理文件:")
+    print("\nFound the following files to process:")
     for i, filename in enumerate(epub_files): print(f"  {i+1}. {filename}")
 
     # 获取用户意图
     tasks = []
     print("\n----------------------------------------")
     for i, filename in enumerate(epub_files):
-        user_input = input(f"\n{i+1}. 请为 '{filename}' 输入新标题 (或直接回车以规整文件名): ")
+        user_input = input(f"\n{i+1}. Enter a new title for '{filename}' (or press Enter to standardize using metadata title): ")
         tasks.append({'filename': filename, 'new_title_input': user_input.strip()})
     
-    print("\n--- 开始批量处理 ---")
+    print("\n--- Starting batch processing ---")
     
     for task in tasks:
         original_filename = task['filename']
@@ -86,7 +86,7 @@ def run_epub_modifier_v8_final():
         original_path = os.path.join(folder_path, original_filename)
         temp_dir = None
         
-        print(f"\n--- 正在处理: {original_filename} ---")
+        print(f"\n--- Processing: {original_filename} ---")
         try:
             temp_dir = tempfile.mkdtemp()
             with zipfile.ZipFile(original_path, 'r') as zip_ref:
@@ -94,42 +94,42 @@ def run_epub_modifier_v8_final():
 
             container_path = os.path.join(temp_dir, 'META-INF', 'container.xml')
             if not os.path.exists(container_path):
-                raise FileNotFoundError("错误: 找不到 META-INF/container.xml")
+                raise FileNotFoundError("Error: META-INF/container.xml not found")
             
             tree = ET.parse(container_path)
             root = tree.getroot()
             ns = {'cn': 'urn:oasis:names:tc:opendocument:xmlns:container'}
             opf_path_element = root.find('cn:rootfiles/cn:rootfile', ns)
-            if opf_path_element is None: raise FileNotFoundError("错误: 在 container.xml 中找不到 <rootfile> 标签")
+            if opf_path_element is None: raise FileNotFoundError("Error: <rootfile> tag not found in container.xml")
             
             opf_file_rel_path = opf_path_element.get('full-path')
             opf_file_abs_path = os.path.join(temp_dir, opf_file_rel_path)
-            print(f"  - 找到元数据文件: {opf_file_rel_path}")
+            print(f"  - Found metadata file: {opf_file_rel_path}")
 
             opf_ns = {'dc': 'http://purl.org/dc/elements/1.1/'}
             tree = ET.parse(opf_file_abs_path)
             root = tree.getroot()
             
             title_element = root.find('.//dc:title', opf_ns)
-            if title_element is None: raise ValueError(f"错误: 在 '{opf_file_rel_path}' 中找不到 <dc:title> 标签")
+            if title_element is None: raise ValueError(f"Error: <dc:title> tag not found in '{opf_file_rel_path}'")
 
             current_title = title_element.text or ""
             
-            # 决定最终标题
+            # Decide final title
             if new_title_input:
                 target_title = new_title_input
-                print(f"  - 用户输入新标题: '{target_title}'")
+                print(f"  - New title entered: '{target_title}'")
                 title_element.text = target_title
                 tree.write(opf_file_abs_path, encoding='utf-8', xml_declaration=True)
             else:
                 target_title = current_title
-                print(f"  - 用户选择跳过，使用书中原有标题: '{target_title}'")
+                print(f"  - Skipped; using original book title: '{target_title}'")
 
             # 重新打包
             new_safe_filename = sanitize_filename(target_title) + '.epub'
             destination_path = get_unique_filepath(os.path.join(processed_folder_path, new_safe_filename))
             
-            print(f"  - 重新打包为: {os.path.basename(destination_path)}")
+            print(f"  - Repacking as: {os.path.basename(destination_path)}")
             with zipfile.ZipFile(destination_path, 'w') as zip_out:
                 mimetype_path = os.path.join(temp_dir, 'mimetype')
                 if os.path.exists(mimetype_path):
@@ -141,15 +141,15 @@ def run_epub_modifier_v8_final():
                         arcname = os.path.relpath(file_path, temp_dir)
                         if arcname != 'mimetype':
                             zip_out.write(file_path, arcname, compress_type=zipfile.ZIP_DEFLATED)
-            print("  - 处理成功！")
+            print("  - Processed successfully!")
 
         except Exception as e:
-            print(f"  ! 处理 '{original_filename}' 时发生严重错误: {e}")
+            print(f"  ! A critical error occurred while processing '{original_filename}': {e}")
         finally:
             if temp_dir and os.path.exists(temp_dir):
                 shutil.rmtree(temp_dir)
 
-    print("\n--- 所有任务已完成 ---")
+    print("\n--- All tasks completed ---")
 
 if __name__ == "__main__":
     run_epub_modifier_v8_final()

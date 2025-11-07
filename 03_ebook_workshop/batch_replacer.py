@@ -10,19 +10,19 @@ import html
 import sys
 import json
 
-# --- 屏蔽已知警告 ---
+# --- Suppress known warnings ---
 warnings.filterwarnings("ignore", category=UserWarning, module='ebooklib')
 warnings.filterwarnings("ignore", category=FutureWarning, module='ebooklib')
 warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
 
 
-# --- 常量定义 ---
+# --- Constants ---
 PROCESSED_DIR_NAME = "processed_files"
 REPORT_DIR_NAME = "compare_reference"
 HIGHLIGHT_STYLE = "background-color: #f1c40f; color: #000; padding: 2px; border-radius: 3px;"
 
 def find_rules_file(directory: Path) -> Path | None:
-    """在目录中查找 .txt 规则文件。会忽略以 '~$' 开头的临时文件。"""
+    """Find a .txt rules file in the directory. Ignores temporary files starting with '~$'."""
     for file in directory.glob('*.txt'):
         if not file.name.startswith('~$'):
             if 'rules' in file.name.lower():
@@ -30,8 +30,8 @@ def find_rules_file(directory: Path) -> Path | None:
     return None
 
 def load_rules(rules_file: Path) -> pd.DataFrame:
-    """加载替换规则, 仅支持 .txt 格式。"""
-    print(f"[*] 正在从 {rules_file.name} 加载替换规则...")
+    """Load replacement rules; supports .txt format only."""
+    print(f"[*] Loading replacement rules from {rules_file.name}...")
     rules_list = []
     try:
         with open(rules_file, 'r', encoding='utf-8') as f:
@@ -48,7 +48,7 @@ def load_rules(rules_file: Path) -> pd.DataFrame:
                         original, mode = match_no_replacement.groups()
                         replacement = ""
                     else:
-                        print(f"[!] 警告: 第 {i} 行规则格式不正确，已忽略: \"{line}\"")
+                        print(f"[!] Warning: Rule format invalid at line {i}; ignored: \"{line}\"")
                         continue
                 else:
                     original, replacement, mode = match.groups()
@@ -62,39 +62,39 @@ def load_rules(rules_file: Path) -> pd.DataFrame:
         df = pd.DataFrame(rules_list)
         
         if df.empty:
-            print("[!] 警告: 规则文件为空或所有规则均无效。")
+            print("[!] Warning: Rules file is empty or all rules are invalid.")
         else:
-            print(f"[+] 成功加载 {len(df)} 条规则。")
+            print(f"[+] Successfully loaded {len(df)} rules.")
         
         return df
 
     except Exception as e:
-        print(f"[!] 加载规则文件失败: {e}")
+        print(f"[!] Failed to load rules file: {e}")
         exit(1)
 
 
 def generate_report(report_path: Path, changes_log: list, source_filename: str):
     """
-    生成HTML格式的变更报告。
+    Generate an HTML change report.
     
     Args:
-        report_path: 报告文件路径
-        changes_log: 变更记录列表，每个元素包含 'original' 和 'modified' 键
-        source_filename: 源文件名
+        report_path: Path to the report file
+        changes_log: List of change records, each containing 'original' and 'modified' keys
+        source_filename: Source filename
     """
     if not changes_log:
-        print(f"[!] 没有变更记录，跳过报告生成: {report_path}")
+        print(f"[!] No change records; skipping report generation: {report_path}")
         return
     
-    # 获取项目根目录和模板路径
+    # Get project root and template path
     project_root = Path(__file__).parent.parent
     template_path = project_root / 'shared_assets' / 'report_template.html'
     
     if not template_path.exists():
-        print(f"[!] 模板文件不存在: {template_path}")
+        print(f"[!] Template file does not exist: {template_path}")
         return
     
-    # 计算从报告文件到shared_assets的相对路径
+    # Compute relative path from the report file to shared_assets
     report_dir = report_path.parent
     shared_assets_dir = project_root / 'shared_assets'
     try:
@@ -102,14 +102,14 @@ def generate_report(report_path: Path, changes_log: list, source_filename: str):
         css_path = f"{relative_path}/report_styles.css".replace('\\', '/')
         js_path = f"{relative_path}/report_scripts.js".replace('\\', '/')
     except ValueError:
-        # 如果无法计算相对路径，使用默认路径
+        # If relative path cannot be computed, use default paths
         css_path = "shared_assets/report_styles.css"
         js_path = "shared_assets/report_scripts.js"
     
-    # 按替换规则归类
+    # Group by replacement rules
     rule_groups = {}
     for change in changes_log:
-        # 提取高亮的原文和替换文本
+        # Extract highlighted original and replacement text
         original_match = re.search(r'<span class="highlight">([^<]+)</span>', change['original'])
         modified_match = re.search(r'<span class="highlight">([^<]+)</span>', change['modified'])
         
@@ -127,14 +127,14 @@ def generate_report(report_path: Path, changes_log: list, source_filename: str):
             
             rule_groups[rule_key]['instances'].append(change)
     
-    # 按实例数量排序
+    # Sort by number of instances
     sorted_rule_groups = sorted(rule_groups.values(), key=lambda x: len(x['instances']), reverse=True)
     total_instances = sum(len(group['instances']) for group in sorted_rule_groups)
     
-    # 读取模板文件
+    # Read template file
     template_content = template_path.read_text(encoding='utf-8')
     
-    # 生成规则列表项
+    # Generate rules list items
     rules_list_items = ""
     for i, group in enumerate(sorted_rule_groups):
         rules_list_items += f'''
@@ -143,11 +143,11 @@ def generate_report(report_path: Path, changes_log: list, source_filename: str):
                             <span class="rule-original">{html.escape(group["original_text"])}</span> → 
                             <span class="rule-replacement">{html.escape(group["replacement_text"])}</span>
                         </div>
-                        <div class="rule-count">{len(group["instances"])} 次</div>
+                        <div class="rule-count">{len(group["instances"])} times</div>
                     </div>
         '''
     
-    # 生成内容区域
+    # Generate content sections
     content_sections = ""
     for group_index, group in enumerate(sorted_rule_groups):
         instance_count = len(group['instances'])
@@ -155,7 +155,7 @@ def generate_report(report_path: Path, changes_log: list, source_filename: str):
             <div class="rule-group" data-group-index="{group_index}">
                 <div class="rule-header" onclick="toggleInstances({group_index})">
                     <div class="rule-title">
-                        <span class="rule-badge">{instance_count} 次</span>
+                        <span class="rule-badge">{instance_count} times</span>
                         <span class="toggle-icon" id="toggle-{group_index}">▼</span>
                     </div>
                     <div class="rule-description">
@@ -167,7 +167,7 @@ def generate_report(report_path: Path, changes_log: list, source_filename: str):
                 <div class="instances-container" id="instances-{group_index}">
         '''
         
-        # 按位置排序实例
+        # Sort instances by position
         sorted_instances = sorted(group['instances'], key=lambda x: x.get('position', 0))
         
         for instance in sorted_instances:
@@ -175,11 +175,11 @@ def generate_report(report_path: Path, changes_log: list, source_filename: str):
                     <div class="instance-item">
                         <div class="instance-content">
                             <div class="original-section">
-                                <div class="section-title">原文</div>
+                                <div class="section-title">Original</div>
                                 <div class="text-content">{instance['original']}</div>
                             </div>
                             <div class="modified-section">
-                                <div class="section-title">修改后</div>
+                                <div class="section-title">Modified</div>
                                 <div class="text-content">{instance['modified']}</div>
                             </div>
                         </div>
@@ -191,7 +191,7 @@ def generate_report(report_path: Path, changes_log: list, source_filename: str):
             </div>
         '''
     
-    # 替换模板中的占位符
+    # Replace placeholders in template
     html_content = template_content.replace('{{source_filename}}', html.escape(source_filename))
     html_content = html_content.replace('{{rules_count}}', str(len(sorted_rule_groups)))
     html_content = html_content.replace('{{total_instances}}', str(total_instances))
@@ -199,27 +199,27 @@ def generate_report(report_path: Path, changes_log: list, source_filename: str):
     html_content = html_content.replace('{{content_sections}}', content_sections)
     html_content = html_content.replace('{{generation_time}}', html.escape(str(__import__('datetime').datetime.now().strftime('%Y-%m-%d %H:%M:%S'))))
     
-    # 替换CSS和JS文件路径
+    # Replace CSS and JS paths
     html_content = html_content.replace('href="shared_assets/report_styles.css"', f'href="{css_path}"')
     html_content = html_content.replace('src="shared_assets/report_scripts.js"', f'src="{js_path}"')
     
     try:
         report_path.write_text(html_content, encoding='utf-8')
-        print(f"[✓] 报告已生成: {report_path}")
+        print(f"[✓] Report generated: {report_path}")
     except Exception as e:
-        print(f"[!] 无法写入报告文件 {report_path}: {e}")
-        
+        print(f"[!] Unable to write report file {report_path}: {e}")
+    
     try:
         report_path.write_text(html_content, encoding='utf-8')
-        print(f"[✓] 报告已生成: {report_path}")
+        print(f"[✓] Report generated: {report_path}")
     except Exception as e:
-        print(f"[!] 无法写入报告文件 {report_path}: {e}")
+        print(f"[!] Unable to write report file {report_path}: {e}")
 
 def process_and_get_changes(content: str, rules: pd.DataFrame) -> tuple[str, list]:
     """
-    核心处理函数：对传入的纯文本进行所有替换。
-    返回元组: (修改后的文本, 原子化变更列表)
-    原子化变更: [{'original_text': '...','replacement_text': '...'}]
+    Core processing: apply all replacements to plain text.
+    Returns a tuple: (modified_text, atomic_change_list)
+    Atomic changes: [{'original_text': '...','replacement_text': '...'}]
     """
     modified_content = content
     atomic_changes = []
@@ -232,19 +232,19 @@ def process_and_get_changes(content: str, rules: pd.DataFrame) -> tuple[str, lis
         search_pattern = re.escape(original) if mode.lower() == 'text' else original
         
         try:
-            # 必须在最新版本的字符串上查找，以处理链式替换
+            # Always search on the latest modified string to handle chained replacements
             matches = list(re.finditer(search_pattern, modified_content))
             if matches:
-                # 记录下每次匹配到的原文和它将被替换成的新文本
+                # Record each matched original and the replacement text it becomes
                 for match in matches:
                     atomic_changes.append({
                         "original_text": match.group(0),
                         "replacement_text": match.expand(replacement)
                     })
-                # 应用本条规则的替换
+                # Apply the replacement for this rule
                 modified_content = re.sub(search_pattern, replacement, modified_content)
         except re.error as e:
-            print(f"\n[!] 正则表达式错误: '{search_pattern}'. 错误: {e}. 跳过。")
+            print(f"\n[!] Regex error: '{search_pattern}'. Error: {e}. Skipped.")
             continue
 
     unique_atomic_changes = [dict(t) for t in {tuple(d.items()) for d in atomic_changes}]
@@ -252,14 +252,14 @@ def process_and_get_changes(content: str, rules: pd.DataFrame) -> tuple[str, lis
 
 
 def process_txt_file(file_path: Path, rules: pd.DataFrame, processed_dir: Path, report_dir: Path):
-    """处理单个 .txt 文件。"""
+    """Process a single .txt file."""
     try:
         content = file_path.read_text(encoding='utf-8')
         paragraphs = content.split('\n\n')
         processed_paragraphs = []
         changes_log_for_report = []
         file_was_modified = False
-        current_position = 0  # 记录当前在原文中的位置
+        current_position = 0  # Track current position in original text
 
         for paragraph_index, p_original in enumerate(paragraphs):
             p_modified, atomic_changes = process_and_get_changes(p_original, rules)
@@ -279,7 +279,7 @@ def process_txt_file(file_path: Path, rules: pd.DataFrame, processed_dir: Path, 
                 changes_log_for_report.append({
                     'original': original_report.replace('\n', '<br>'),
                     'modified': modified_report.replace('\n', '<br>'),
-                    'position': current_position + paragraph_index  # 添加位置信息
+                    'position': current_position + paragraph_index  # Add position info
                 })
             
             current_position += len(p_original) + 2  # +2 for \n\n separator
@@ -293,16 +293,16 @@ def process_txt_file(file_path: Path, rules: pd.DataFrame, processed_dir: Path, 
             return True
 
     except Exception as e:
-        print(f"\n[!] 处理TXT文件失败 {file_path.name}: {e}")
+        print(f"\n[!] Failed to process TXT file {file_path.name}: {e}")
     return False
 
 def process_epub_file(file_path: Path, rules: pd.DataFrame, processed_dir: Path, report_dir: Path):
-    """处理单个 .epub 文件 (已修复)。"""
+    """Process a single .epub file (fixed)."""
     try:
         book = epub.read_epub(str(file_path))
         changes_log = []
         book_is_modified = False
-        global_position = 0  # 记录全局位置
+        global_position = 0  # Track global position
 
         for item in book.get_items_of_type(ITEM_DOCUMENT):
             soup = BeautifulSoup(item.get_content(), 'xml')
@@ -311,7 +311,8 @@ def process_epub_file(file_path: Path, rules: pd.DataFrame, processed_dir: Path,
 
             item_is_modified = False
             for p_tag in soup.body.find_all('p'):
-                if not p_tag.get_text(strip=True): continue
+                if not p_tag.get_text(strip=True):
+                    continue
 
                 original_p_html = str(p_tag)
                 p_text_original = p_tag.get_text()
@@ -322,7 +323,7 @@ def process_epub_file(file_path: Path, rules: pd.DataFrame, processed_dir: Path,
                     book_is_modified = True
                     item_is_modified = True
                     
-                    p_tag.string = p_text_modified # 更安全地替换段落内容
+                    p_tag.string = p_text_modified  # Safely replace paragraph content
                     modified_p_html = str(p_tag)
 
                     original_report = original_p_html
@@ -337,10 +338,10 @@ def process_epub_file(file_path: Path, rules: pd.DataFrame, processed_dir: Path,
                     changes_log.append({
                         'original': original_report,
                         'modified': modified_report,
-                        'position': global_position  # 添加位置信息
+                        'position': global_position  # Add position info
                     })
                 
-                global_position += len(p_text_original)  # 更新全局位置
+                global_position += len(p_text_original)  # Update global position
 
             if item_is_modified:
                 item.set_content(str(soup).encode('utf-8'))
@@ -352,46 +353,46 @@ def process_epub_file(file_path: Path, rules: pd.DataFrame, processed_dir: Path,
             return True
 
     except Exception as e:
-        print(f"\n[!] 处理EPUB文件失败 {file_path.name}: {e}")
+        print(f"\n[!] Failed to process EPUB file {file_path.name}: {e}")
     return False
 
-# --- 新增：函数用于从 settings.json 加载默认路径 ---
+# --- Added: function to load default path from settings.json ---
 def load_default_path_from_settings():
-    """从共享设置文件中读取默认工作目录。"""
+    """Read the default work directory from the shared settings file."""
     try:
-        # 向上导航两级以到达项目根目录
+        # Navigate up two levels to reach the project root
         project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         settings_path = os.path.join(project_root, 'shared_assets', 'settings.json')
         with open(settings_path, 'r', encoding='utf-8') as f:
             settings = json.load(f)
-        # 如果 "default_work_dir" 存在且不为空，则返回它
+        # If "default_work_dir" exists and is non-empty, return it
         default_dir = settings.get("default_work_dir")
         return default_dir if default_dir else "."
     except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
-        print(f"警告：读取 settings.json 失败 ({e})，将使用用户主目录下的 'Downloads' 作为备用路径。")
-        # 提供一个通用的备用路径
+        print(f"Warning: Failed to read settings.json ({e}); using 'Downloads' in the user home as fallback.")
+        # Provide a generic fallback path
         return os.path.join(os.path.expanduser("~"), "Downloads")
 
 def main():
-    """主函数"""
+    """Main function"""
     # --- 修改：动态加载默认路径 ---
     default_path = load_default_path_from_settings()
     
     prompt_message = (
-        f"请输入包含源文件和规则文件的文件夹路径。\n"
-        f"(直接按 Enter 键，将使用默认路径 '{default_path}') : "
+        f"Please enter the folder path containing source files and rules.\n"
+        f"(Press Enter to use the default path '{default_path}'): "
     )
     user_input = input(prompt_message)
 
     if not user_input.strip():
         directory_path = default_path
-        print(f"[*] 未输入路径，已使用默认路径: {directory_path}")
+        print(f"[*] No input provided; using default path: {directory_path}")
     else:
         directory_path = user_input.strip()
 
     base_dir = Path(directory_path)
     if not base_dir.is_dir():
-        print(f"[!] 错误: 文件夹 '{base_dir}' 不存在。")
+        print(f"[!] Error: Folder '{base_dir}' does not exist.")
         return
 
     processed_dir = base_dir / PROCESSED_DIR_NAME
@@ -399,30 +400,30 @@ def main():
     processed_dir.mkdir(exist_ok=True)
     report_dir.mkdir(exist_ok=True)
 
-    print(f"[*] 工作目录: {base_dir}")
-    print(f"[*] 输出文件夹已准备就绪:\n    - 处理后文件: {processed_dir}\n    - 变更报告: {report_dir}")
+    print(f"[*] Working directory: {base_dir}")
+    print(f"[*] Output folders ready:\n    - Processed files: {processed_dir}\n    - Change reports: {report_dir}")
 
     rules_file = find_rules_file(base_dir)
     if not rules_file:
-        print("[!] 错误: 在指定文件夹中未找到 'rules.txt' 格式的规则文件。")
+        print("[!] Error: No 'rules.txt' rules file found in the specified folder.")
         return
     rules = load_rules(rules_file)
 
     if rules.empty:
-        print("[!] 规则为空，未执行任何替换。")
+        print("[!] Rules are empty; no replacements performed.")
         return
 
     all_target_files = list(base_dir.glob('*.txt')) + list(base_dir.glob('*.epub'))
     files_to_process = [f for f in all_target_files if f.resolve() != rules_file.resolve()]
 
     if not files_to_process:
-        print("[!] 在指定文件夹中没有找到任何需要处理的 .txt 或 .epub 文件。")
+        print("[!] No .txt or .epub files found in the specified folder.")
         return
 
-    print(f"[*] 发现 {len(files_to_process)} 个待处理文件。")
+    print(f"[*] Found {len(files_to_process)} files to process.")
 
     modified_count = 0
-    with tqdm(total=len(files_to_process), desc="处理进度", unit="个文件") as pbar:
+    with tqdm(total=len(files_to_process), desc="Processing progress", unit="file(s)") as pbar:
         for file_path in files_to_process:
             pbar.set_postfix_str(file_path.name, refresh=True)
             was_modified = False
@@ -436,10 +437,10 @@ def main():
             pbar.update(1)
 
     print("\n----------------------------------------")
-    print(f"[✓] 任务完成！")
-    print(f"    - 共处理 {len(files_to_process)} 个文件。")
-    print(f"    - 其中 {modified_count} 个文件被修改。")
-    print(f"    - 结果已保存至 '{PROCESSED_DIR_NAME}' 和 '{REPORT_DIR_NAME}' 文件夹。")
+    print(f"[✓] Task completed!")
+    print(f"    - Processed {len(files_to_process)} files.")
+    print(f"    - Modified {modified_count} file(s).")
+    print(f"    - Results saved in '{PROCESSED_DIR_NAME}' and '{REPORT_DIR_NAME}' folders.")
 
 if __name__ == '__main__':
     main()

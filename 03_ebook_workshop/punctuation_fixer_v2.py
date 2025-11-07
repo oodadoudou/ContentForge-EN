@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-标点符号补全工具
-支持处理 .txt 和 .epub 文件，自动修复中文文本中缺失的标点符号
+Punctuation Completion Tool
+Supports processing .txt and .epub files, automatically fixing missing punctuation in Chinese text.
 """
 
 import re
@@ -19,21 +19,21 @@ import html
 import sys
 import json
 
-# --- 屏蔽已知警告 ---
+# --- Suppress known warnings ---
 warnings.filterwarnings("ignore", category=UserWarning, module='ebooklib')
 warnings.filterwarnings("ignore", category=FutureWarning, module='ebooklib')
 warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
 
-# --- 常量定义 ---
+# --- Constants ---
 PROCESSED_DIR_NAME = "processed_files"
 REPORT_DIR_NAME = "compare_reference"
 HIGHLIGHT_STYLE = "background-color: #f1c40f; color: #000; padding: 2px; border-radius: 3px;"
 
 # =========================
-# 引號修正函數
+# Quote Fix Functions
 # =========================
 def fix_quotes_with_log(text):
-    """修正引號，並返回修改記錄"""
+    """Fix quotes and return a log of modifications."""
     atomic_changes = []
 
     def record_change(orig, repl):
@@ -42,90 +42,90 @@ def fix_quotes_with_log(text):
         return repl
 
     def replace_in_text(segment):
-        # --- 0. 處理閉-開引號順序錯誤：”…“ → 「…」
+        # --- 0. Handle closing-opening quote order mistakes: ”…“ → 「…」
         segment = re.sub(
             r'”([^“]*?)“',
             lambda m: record_change(m.group(0), f'「{m.group(1)}」'),
             segment
         )
 
-        # --- 1. 整段被 " 或 “ ” 包住的文字 → 「」
+        # --- 1. Whole segment wrapped by " or “ ” → 「」
         segment = re.sub(
             r'^[\s]*["“](.*)["”][\s]*$',
             lambda m: record_change(m.group(0), f'「{m.group(1)}」'),
             segment
         )
 
-        # --- 2. 錯誤配對修正
+        # --- 2. Fix mismatched pairs
         segment = re.sub(r'」(.*?)「', lambda m: record_change(m.group(0), f'「{m.group(1)}」'), segment)
         segment = re.sub(r'』(.*?)『', lambda m: record_change(m.group(0), f'『{m.group(1)}』'), segment)
 
-        # --- 2.5. 修正頭尾不對稱的引號
-        # case: 句首是閉引號 → 換成開引號
+        # --- 2.5. Fix asymmetric quotes at ends
+        # case: Closing quote at start → change to opening
         segment = re.sub(
             r'^」([^」]+)」$',
             lambda m: record_change(m.group(0), f'「{m.group(1)}」'),
             segment
         )
-        # case: 句尾是開引號 → 換成閉引號
+        # case: Opening quote at end → change to closing
         segment = re.sub(
             r'^「([^「]+)「$',
             lambda m: record_change(m.group(0), f'「{m.group(1)}」'),
             segment
         )
 
-        # --- 3. "句子" → 「句子」
+        # --- 3. "Sentence" → 「Sentence」
         segment = re.sub(r'"([^"]*?)"', lambda m: record_change(m.group(0), f'「{m.group(1)}」'), segment)
         segment = re.sub(r'“([^”]*?)”', lambda m: record_change(m.group(0), f'「{m.group(1)}」'), segment)
 
-        # --- 4. 替換混用
+        # --- 4. Replace mixed usage
         segment = segment.replace("“", "「").replace("”", "」")
 
-        # --- 5. 修正混用標點
+        # --- 5. Fix mixed punctuation
         segment = re.sub(r'([。！？])["”]', lambda m: record_change(m.group(0), f'{m.group(1)}」'), segment)
         segment = re.sub(r'(["”])([。！？])', lambda m: record_change(m.group(0), f'」{m.group(2)}'), segment)
 
-        # --- 5.5. 在閉引號前補句號
-        # 中文或英文文字 + 」 → 補句號
+        # --- 5.5. Add period before closing quote
+        # Chinese or English text + 」 → add period
         segment = re.sub(
             r'([\u4e00-\u9fffA-Za-z0-9])」',
             lambda m: record_change(m.group(0), f'{m.group(1)}。」'),
             segment
         )
 
-        # 單個點 + 」 → 變成句號
+        # Single dot + 」 → change to period
         segment = re.sub(
             r'(?<!\.)\.」',
             lambda m: record_change(m.group(0), '。」'),
             segment
         )
 
-        # --- 6. 單獨句尾的 " → 」(已有「或」結尾則跳過)
+        # --- 6. Standalone trailing " → 」(skip if already ends with 「 or 」)
         segment = re.sub(
             r'([^\s])"$',
             lambda m: record_change(m.group(0), f'{m.group(1)}」') if not m.group(1).endswith('」') else m.group(0),
             segment
         )
 
-        # --- 7. 清理尾端多餘閉引號
+        # --- 7. Clean extra trailing closing quotes
         segment = re.sub(r'」+$', '」', segment)
         segment = re.sub(r'^「+', '「', segment)
 
-        # --- 8. 避免空「」
+        # --- 8. Avoid empty 「」
         segment = re.sub(r'「」', '', segment)
 
         return segment
 
-    # --- 新增：專門處理 <p class="a"> 內的引號
+    # --- Added: Specifically handle quotes inside <p class="a">
     def replace_inside_p_tag(match):
         content = match.group(1)
         fixed_content = replace_in_text(content)
         return f'<p class="a">{fixed_content}</p>'
 
-    # 先處理 <p class="a"> 標籤內的文字
+    # First handle text inside <p class="a"> tags
     text = re.sub(r'<p class="a">(.*?)</p>', replace_inside_p_tag, text, flags=re.DOTALL)
 
-    # 再處理其他非標籤文字
+    # Then handle other non-tag text
     parts = re.split(r'(<[^>]+>)', text)
     fixed_parts = [p if p.startswith("<") and p.endswith(">") else replace_in_text(p) for p in parts]
 
@@ -133,15 +133,15 @@ def fix_quotes_with_log(text):
 
 
 # =========================
-# 標點符號修正函數
+# Punctuation Fix Functions
 # =========================
 def fix_punctuation_and_get_changes(content: str) -> tuple[str, list]:
     """
-    基于中文语法规范修复标点符号问题并返回修改记录
-    参考《标点符号用法》国家标准GB/T 15834-2011
-    只补全逗号，不补全句号，并跳过非正文内容。
-    返回元组: (修改后的文本, 原子化变更列表)
-    原子化变更: [{'original_text': '...','replacement_text': '...'}]
+    Fix punctuation issues based on Chinese grammar norms and return changes.
+    Reference: GB/T 15834-2011 punctuation usage standard.
+    Only completes commas (not periods) and skips non-main content.
+    Returns: (modified_text, atomic_changes)
+    Atomic changes: [{'original_text': '...','replacement_text': '...'}]
     """
     # 首先判断是否为正文内容
     if not is_main_content(content):
@@ -150,55 +150,55 @@ def fix_punctuation_and_get_changes(content: str) -> tuple[str, list]:
     modified_content = content
     atomic_changes = []
     
-    # 简化的标点符号和空格修复规则（简单粗暴版本）
+    # Simplified punctuation and spacing fix rules (pragmatic version)
     punctuation_rules = [
         # 最高优先级：去除标点符号前的空格
         {
             'pattern': r'\s+([，,；;：:.。！!？?])',
             'replacement': r'\1',
-            'description': '去除标点符号前的空格'
+            'description': 'Remove spaces before punctuation'
         },
         
         # 数字和单位处理（直接删除空格）
         {
             'pattern': r'([\d]+)\s+([元件个只张页卷本章节天年月日时分秒米厘米公里克千克斤两])',
             'replacement': r'\1\2',
-            'description': '数字单位间去除空格'
+            'description': 'Remove spaces between numbers and units'
         },
         
         # 量词前的空格（直接删除）
         {
             'pattern': r'([一二三四五六七八九十百千万亿零壹贰叁肆伍陆柒捌玖拾佰仟萬億\d]+)\s+([个只条张片块把件套双对副组批次回遍趟])',
             'replacement': r'\1\2',
-            'description': '删除量词前的空格'
+            'description': 'Remove spaces before classifiers'
         },
         
         # 动作补语前的空格（直接删除）
         {
             'pattern': r'([\u4e00-\u9fff]*[走跑跳站坐躺])\s+(过来|过去|起来|下去|上来|下来|进来|出去)',
             'replacement': r'\1\2',
-            'description': '删除动作补语前的空格'
+            'description': 'Remove spaces before result complements'
         },
         
         # 转折因果词前添加逗号（排除前面已有标点的情况）
         {
             'pattern': r'(?<![。！？，；：\-—])([\u4e00-\u9fff])\s+(但|然而|不过|可是|却|所以|因此|因而)',
             'replacement': r'\1，\2',
-            'description': '转折因果词前添加逗号'
+            'description': 'Add comma before contrast/causal words'
         },
         
         # 其他连词前的空格（直接删除）
         {
             'pattern': r'\s+(和|与|及|以及|或者|或|但是|而且|并且|因为|如果|假如|虽然|尽管)',
             'replacement': r'\1',
-            'description': '删除其他连词前的空格'
+            'description': 'Remove spaces before other conjunctions'
         },
         
         # 简单粗暴：所有中文字符间的空格都替换为逗号
         {
             'pattern': r'([\u4e00-\u9fff])\s+([\u4e00-\u9fff])',
             'replacement': r'\1，\2',
-            'description': '中文字符间空格替换为逗号'
+            'description': 'Replace spaces between Chinese characters with commas'
         }
     ]
     
@@ -232,7 +232,7 @@ def fix_punctuation_and_get_changes(content: str) -> tuple[str, list]:
                         # 应用替换
                         modified_content = modified_content.replace(original_text, replacement_text, 1)
         except re.error as e:
-            print(f"\n[!] 正则表达式错误: '{pattern}'. 错误: {e}. 跳过。")
+            print(f"\n[!] Regex error: '{pattern}'. Error: {e}. Skipping.")
             continue
     
     # 去重
@@ -240,24 +240,24 @@ def fix_punctuation_and_get_changes(content: str) -> tuple[str, list]:
     return modified_content, unique_atomic_changes
 
 # =========================
-# 正文判斷
+# Main Content Detection
 # =========================
 def is_main_content(content: str) -> bool:
     """
-    判断给定内容是否为正文内容
-    排除标题、版权信息、目录、页眉页脚等非正文内容
-    优化后更宽松地识别正文，特别是对话和短句
+    Determine whether given content is main body text.
+    Exclude titles, copyright info, TOC, headers/footers, and similar.
+    Uses a relaxed heuristic to better recognize dialogues and short sentences.
     """
     if not content or not content.strip():
         return False
     
     content = content.strip()
     
-    # 检查是否为明显的标题（包含章节标识且很短且无标点）
+    # Check for obvious headings (contains chapter markers, short, no punctuation)
     if len(content) < 8 and any(char in content for char in ['第', '章', '节', '篇', '卷']) and not any(char in content for char in ['，', '。', '！', '？']):
         return False
     
-    # 检查是否包含版权相关信息
+    # Check for copyright-related info
     if any(keyword in content for keyword in [
         '作者', '版权', '出版', '编辑', '译者', '责任编辑', 
         '©', 'Copyright', '版权所有', 'All rights reserved',
@@ -265,51 +265,51 @@ def is_main_content(content: str) -> bool:
     ]):
         return False
     
-    # 特殊检查：排除单独的价格信息（如"定价：XX元"）
+    # Special case: Exclude standalone price info (e.g., "Price: XX元")
     if re.match(r'^定价[：:].+元$', content.strip()):
         return False
     
-    # 检查是否为目录内容
+    # Check for TOC-like content
     if content.count('…') > 3 or content.count('·') > 3:
         return False
     
-    # 检查是否为页眉页脚（通常包含页码）
+    # Check for headers/footers (usually contain page numbers)
     if re.match(r'^[\d\-\s]+$', content):
         return False
     
-    # 更宽松的长度检查：只排除极短且无意义的内容
+    # Looser length check: only exclude extremely short and meaningless content
     if len(content) < 3:
         return False
     
-    # 如果包含中文字符且有一定长度，很可能是正文
+    # If contains Chinese characters with some length, likely main content
     chinese_chars = len(re.findall(r'[\u4e00-\u9fff]', content))
     if chinese_chars >= 2:
         return True
     
-    # 特殊情况：数字+中文单位的组合也应该被处理
+    # Special case: number + Chinese unit combinations should be processed
     if re.search(r'\d+\s*[\u4e00-\u9fff]+', content):
         return True
     
-    # 特殊情况：包含标点符号和中文的短文本
+    # Special case: short text with punctuation and Chinese should be processed
     if chinese_chars >= 1 and re.search(r'[。！？，]', content):
         return True
     
     return False
 
 # =========================
-# 報告生成
+# Report Generation
 # =========================
 def generate_report(report_path: Path, changes_log: list, source_filename: str):
     """
-    生成HTML格式的变更报告。
+    Generate an HTML change report.
     
     Args:
-        report_path: 报告文件路径
-        changes_log: 变更记录列表，每个元素包含 'original' 和 'modified' 键
-        source_filename: 源文件名
+        report_path: Path to the report file
+        changes_log: List of change records, each containing 'original' and 'modified'
+        source_filename: Source filename
     """
     if not changes_log:
-        print(f"[!] 没有变更记录，跳过报告生成: {report_path}")
+        print(f"[!] No change records; skipping report generation: {report_path}")
         return
     
     # 获取项目根目录和模板路径
@@ -317,7 +317,7 @@ def generate_report(report_path: Path, changes_log: list, source_filename: str):
     template_path = project_root / 'shared_assets' / 'report_template.html'
     
     if not template_path.exists():
-        print(f"[!] 模板文件不存在: {template_path}")
+        print(f"[!] Template file does not exist: {template_path}")
         return
     
     # 计算从报告文件到shared_assets的相对路径
@@ -328,11 +328,11 @@ def generate_report(report_path: Path, changes_log: list, source_filename: str):
         css_path = f"{relative_path}/report_styles.css".replace('\\', '/')
         js_path = f"{relative_path}/report_scripts.js".replace('\\', '/')
     except ValueError:
-        # 如果无法计算相对路径，使用默认路径
+        # If relative path cannot be computed, use default paths
         css_path = "shared_assets/report_styles.css"
         js_path = "shared_assets/report_scripts.js"
     
-    # 按替换规则归类
+    # Group by replacement rules
     rule_groups = {}
     for change in changes_log:
         # 提取高亮的原文和替换文本
@@ -353,14 +353,14 @@ def generate_report(report_path: Path, changes_log: list, source_filename: str):
             
             rule_groups[rule_key]['instances'].append(change)
     
-    # 按实例数量排序
+    # Sort by number of instances
     sorted_rule_groups = sorted(rule_groups.values(), key=lambda x: len(x['instances']), reverse=True)
     total_instances = sum(len(group['instances']) for group in sorted_rule_groups)
     
-    # 读取模板文件
+    # Read template file
     template_content = template_path.read_text(encoding='utf-8')
     
-    # 生成规则列表项
+    # Generate rule list items
     rules_list_items = ""
     for i, group in enumerate(sorted_rule_groups):
         rules_list_items += f'''
@@ -373,7 +373,7 @@ def generate_report(report_path: Path, changes_log: list, source_filename: str):
                     </div>
         '''
     
-    # 生成内容区域
+    # Generate content sections
     content_sections = ""
     for group_index, group in enumerate(sorted_rule_groups):
         instance_count = len(group['instances'])
@@ -393,7 +393,7 @@ def generate_report(report_path: Path, changes_log: list, source_filename: str):
                 <div class="instances-container" id="instances-{group_index}">
         '''
         
-        # 按位置排序实例
+        # Sort instances by position
         sorted_instances = sorted(group['instances'], key=lambda x: x.get('position', 0))
         
         for instance in sorted_instances:
@@ -417,7 +417,7 @@ def generate_report(report_path: Path, changes_log: list, source_filename: str):
             </div>
         '''
     
-    # 替换模板中的占位符
+    # Replace placeholders in template
     html_content = template_content.replace('{{source_filename}}', html.escape(source_filename))
     html_content = html_content.replace('{{rules_count}}', str(len(sorted_rule_groups)))
     html_content = html_content.replace('{{total_instances}}', str(total_instances))
@@ -425,15 +425,15 @@ def generate_report(report_path: Path, changes_log: list, source_filename: str):
     html_content = html_content.replace('{{content_sections}}', content_sections)
     html_content = html_content.replace('{{generation_time}}', html.escape(str(__import__('datetime').datetime.now().strftime('%Y-%m-%d %H:%M:%S'))))
     
-    # 替换CSS和JS文件路径
+    # Replace CSS and JS file paths
     html_content = html_content.replace('href="shared_assets/report_styles.css"', f'href="{css_path}"')
     html_content = html_content.replace('src="shared_assets/report_scripts.js"', f'src="{js_path}"')
     
     try:
         report_path.write_text(html_content, encoding='utf-8')
-        print(f"[✓] 报告已生成: {report_path}")
+        print(f"[✓] Report generated: {report_path}")
     except Exception as e:
-        print(f"[!] 无法写入报告文件 {report_path}: {e}")
+        print(f"[!] Unable to write report file {report_path}: {e}")
 
 # =========================
 # TXT 處理

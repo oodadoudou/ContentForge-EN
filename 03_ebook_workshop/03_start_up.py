@@ -7,44 +7,44 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from shared_utils import utils
 
 def menu_ebook_workshop():
-    """模块三: 电子书处理与生成的独立菜单"""
+    """Module 03: Standalone menu for eBook processing and generation"""
     module_path = '03_ebook_workshop'
     
     # 加载全局设置
     settings = utils.load_settings()
     
     while True:
-        utils.print_header("3. 电子书处理与生成 (TXT/EPUB/HTML)")
-        print("--- 创建与转换 ---")
-        print(" 1. [创建] 从 TXT 创建带章节目录的 EPUB (⭐新增样式选择)")
-        print("    └ 功能: 智能章节识别 + 5种精美样式 + 实时预览 + 自定义封面")
-        print(" 2. [创建] 将 Markdown 文件夹批量转为 HTML")
-        print(" 3. [转换] 从 EPUB 提取纯文本内容 (TXT)")
+        utils.print_header("3. eBook Processing & Generation (TXT/EPUB/HTML)")
+        print("--- Create & Convert ---")
+        print(" 1. [Create] Build EPUB with chapter TOC from TXT (⭐ New style selection)")
+        print("    └ Features: Intelligent chapter detection + 5 elegant styles + live preview + custom cover")
+        print(" 2. [Create] Batch convert Markdown folder to HTML")
+        print(" 3. [Convert] Extract plain text (TXT) from EPUB")
         
-        print("\n--- 编辑与修复 EPUB ---")
-        print(" 4. (元数据) 批量重命名 EPUB 文件")
-        print("    └ 功能: 读取EPUB内部标题，让你手动修改或自动规整化文件名。")
-        print(" 5. (内容) 仅将 EPUB 内文转为简体中文")
-        print("    └ 功能: 只进行繁体到简体的文字转换，不改变排版。")
-        print(" 6. (综合) 修复竖排版并转为简体中文 (推荐)")
-        print("    └ 功能: 自动检测并修正竖排版和繁体内容，一步到位。")
-        print(" 7. (清理) EPUB 清理工具 (封面/字体)")
-        print("    └ 功能: 删除 EPUB 中的封面、字体文件和 CSS 字体声明，支持单独或组合操作。")
+        print("\n--- Edit & Repair EPUB ---")
+        print(" 4. (Metadata) Batch rename EPUB files")
+        print("    └ Feature: Read internal EPUB title; manually edit or auto-normalize filenames.")
+        print(" 5. (Content) Convert EPUB content to Simplified Chinese only")
+        print("    └ Feature: Only Traditional→Simplified conversion; layout unchanged.")
+        print(" 6. (Comprehensive) Fix vertical layout and convert to Simplified Chinese (Recommended)")
+        print("    └ Feature: Auto-detect and correct vertical layout and Traditional content in one go.")
+        print(" 7. (Cleanup) EPUB cleaner (covers/fonts)")
+        print("    └ Feature: Remove covers, font files, and CSS font declarations; supports standalone or combined ops.")
         
-        print("\n--- 高级工具 ---")
-        print(" 8. 根据规则批量替换 EPUB/TXT 内容")
-        print(" 9. 用统一的 CSS 样式美化 EPUB")
-        print(" 10. 按章节数量均等分割 EPUB 文件")
-        print(" 11. 合并文件夹内所有 EPUB")
-        print(" 12. [工具] EPUB 解包/封装工具")
-        print("     └ 功能: 批量解压 EPUB 便于编辑，或从文件夹重新打包成 EPUB。")
-        print(" 13. 标点符号补全工具 (TXT/EPUB)")
-        print("     └ 功能: 智能补全中文文本中缺失的逗号，跳过非正文内容。")
+        print("\n--- Advanced Tools ---")
+        print(" 8. Batch replace EPUB/TXT content by rules")
+        print(" 9. Beautify EPUB with unified CSS style")
+        print(" 10. Split EPUB into equal parts by chapter count")
+        print(" 11. Merge all EPUBs in a folder")
+        print(" 12. [Utility] EPUB unpack/pack toolkit")
+        print("     └ Feature: Batch unzip EPUBs for editing or repackage from folder into EPUB.")
+        print(" 13. Punctuation completion tool (TXT/EPUB)")
+        print("     └ Feature: Intelligently add missing commas in Chinese text; skip non-body content.")
 
         print("----------")
-        print(" 88. 查看本模块用法说明 (README)")
-        print(" 0. 返回主菜单")
-        choice = utils.get_input("请选择")
+        print(" 88. View module usage (README)")
+        print(" 0. Return to main menu")
+        choice = utils.get_input("Please choose")
 
         if choice == '1':
             utils.run_script("txt_to_epub_convertor.py", cwd=module_path)
@@ -71,11 +71,11 @@ def menu_ebook_workshop():
         elif choice == '12':
             utils.run_script("epub_toolkit.py", cwd=module_path)
         elif choice == '13':
-            print("\n请选择标点补全模式：")
-            print(" 1. 只补充逗号（推荐，安全）")
-            print(" 2. 高级版：补充更多对话符号（有可能出错）")
-            mode = utils.get_input("请输入模式编号 (1/2)")
-            print("\n温馨提示：\n执行完成后，建议使用 4. 文件修复与工具 → 3. 修复 EPUB 缺失的 CSS 样式链接，修复可能出现的 css 样式丢失问题。\n")
+            print("\nSelect punctuation completion mode:")
+            print(" 1. Add commas only (Recommended, safe)")
+            print(" 2. Advanced: Add more dialogue symbols (may be incorrect)")
+            mode = utils.get_input("Enter mode number (1/2)")
+            print("\nTip:\nAfter completion, use 4. File Repair & Tools → 3. Fix missing CSS links in EPUB to resolve potential CSS loss issues.\n")
             if mode == '2':
                 utils.run_script("punctuation_fixer_v2.py", cwd=module_path)
             else:
@@ -83,13 +83,13 @@ def menu_ebook_workshop():
         elif choice == '88':
             utils.show_usage(module_path)
         elif choice == '0':
-            # 返回主菜单（在子脚本中即为退出）
+            # Return to main menu (exit from sub-menu)
             break
 
 if __name__ == "__main__":
     try:
         menu_ebook_workshop()
     except KeyboardInterrupt:
-        # 当用户在子菜单中按 Ctrl+C 时，优雅退出
-        print("\n\n操作被用户中断。")
+        # Graceful exit when user presses Ctrl+C within the sub-menu
+        print("\n\nOperation interrupted by user.")
         sys.exit(0)

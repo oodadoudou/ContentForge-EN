@@ -5,62 +5,62 @@ from bs4 import BeautifulSoup
 from tqdm import tqdm
 import json
 
-# --- 配置 ---
-# 设置输出文件夹的名称
+# --- Configuration ---
+# Name of the output folder
 OUTPUT_DIR_NAME = 'processed_files' 
 
 def convert_epub_to_txt(epub_path, output_txt_path):
     """
-    将单个 EPUB 文件转换为 TXT 文件，保留段落结构。
+    Convert a single EPUB file to a TXT file, preserving paragraph structure.
 
     Args:
-        epub_path (str): 源 EPUB 文件的路径。
-        output_txt_path (str): 输出 TXT 文件的保存路径。
+        epub_path (str): Path to the source EPUB file.
+        output_txt_path (str): Path to save the output TXT file.
 
     Returns:
-        bool: 如果转换成功则返回 True，否则返回 False。
+        bool: True if conversion succeeded; False otherwise.
     """
     try:
-        # 使用 ebooklib 读取 EPUB 文件
+        # Read the EPUB file using ebooklib
         book = epub.read_epub(epub_path)
         
         all_paragraphs = []
 
-        # 遍历 EPUB 中的所有文档项 (通常是章节的 XHTML 文件)
+        # Iterate over all document items (usually chapter XHTML files)
         for item in book.get_items_of_type(ITEM_DOCUMENT):
-            # 获取章节内容的原始 HTML
+            # Get the raw HTML content of the chapter
             html_content = item.get_content()
             
-            # 使用 BeautifulSoup 解析 HTML
+            # Parse HTML using BeautifulSoup
             soup = BeautifulSoup(html_content, 'html.parser')
             
-            # 查找所有的文本内容标签 (段落和标题)
-            # 包括段落标签 <p> 和标题标签 <h1> 到 <h6>
+            # Find all text tags (paragraphs and headings)
+            # Includes <p> and heading tags <h1> to <h6>
             content_tags = soup.find_all(['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'])
             
             for tag in content_tags:
-                # 获取标签内的所有文本
+                # Get all text inside the tag
                 text = tag.get_text(' ', strip=True)
-                if text: # 确保不添加空内容
+                if text: # Ensure no empty content added
                     all_paragraphs.append(text)
         
-        # 将所有段落用两个换行符（即一个空行）连接起来
+        # Join all paragraphs with two newlines (i.e., a blank line)
         final_text = "\n\n".join(all_paragraphs)
         
-        # 将最终的文本内容以 UTF-8 编码写入 TXT 文件
+        # Write the final text content to a TXT file using UTF-8 encoding
         with open(output_txt_path, 'w', encoding='utf-8') as f:
             f.write(final_text)
             
         return True
 
     except Exception as e:
-        # 如果过程中发生任何错误，打印错误信息
-        print(f"\n[!] 处理文件 '{os.path.basename(epub_path)}' 时发生错误: {e}")
+        # Print error info on any exception during processing
+        print(f"\n[!] Error processing file '{os.path.basename(epub_path)}': {e}")
         return False
 
-# --- 新增：函数用于从 settings.json 加载默认路径 ---
+# --- Added: Load default path from settings.json ---
 def load_default_path_from_settings():
-    """从共享设置文件中读取默认工作目录。"""
+    """Read default working directory from the shared settings file."""
     try:
         project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         settings_path = os.path.join(project_root, 'shared_assets', 'settings.json')
@@ -73,50 +73,50 @@ def load_default_path_from_settings():
 
 def main():
     """
-    主函数，处理用户输入、目录扫描和文件转换流程。
+    Main function that handles user input, directory scanning, and conversion.
     """
-    print("--- EPUB to TXT 转换工具 ---")
+    print("--- EPUB to TXT Converter ---")
 
-    # --- 修改：动态加载默认路径 ---
+    # --- Update: Dynamically load default path ---
     default_dir = load_default_path_from_settings()
     
-    # 获取用户输入，如果用户直接按回车，则使用默认路径
-    input_dir = input(f"请输入包含 EPUB 文件的目录 (默认为: {default_dir}): ").strip()
+    # Get user input; if user presses Enter, use the default path
+    input_dir = input(f"Enter the directory containing EPUB files (default: {default_dir}): ").strip()
     if not input_dir:
         input_dir = default_dir
-        print(f"[*] 未输入路径，已使用默认目录: {input_dir}")
+        print(f"[*] No path entered; using default directory: {input_dir}")
 
-    # 检查指定的目录是否存在
+    # Check if the specified directory exists
     if not os.path.isdir(input_dir):
-        print(f"[!] 错误: 目录 '{input_dir}' 不存在。程序退出。")
+        print(f"[!] Error: Directory '{input_dir}' does not exist. Exiting.")
         sys.exit(1)
 
-    # 创建用于存放处理后文件的输出目录
+    # Create output directory for processed files
     output_dir = os.path.join(input_dir, OUTPUT_DIR_NAME)
     os.makedirs(output_dir, exist_ok=True)
     
-    print(f"[*] 转换后的 .txt 文件将保存在: {output_dir}")
+    print(f"[*] Converted .txt files will be saved in: {output_dir}")
 
-    # 扫描目录，找到所有 .epub 文件
+    # Scan directory to find all .epub files
     epub_files = [f for f in os.listdir(input_dir) if f.lower().endswith('.epub')]
 
     if not epub_files:
-        print("\n[!] 在指定目录中未找到任何 .epub 文件。")
+        print("\n[!] No .epub files found in the specified directory.")
         return
 
-    print(f"\n[*] 发现 {len(epub_files)} 个 EPUB 文件，开始转换...")
+    print(f"\n[*] Found {len(epub_files)} EPUB file(s); starting conversion...")
     
     success_count = 0
     fail_count = 0
 
-    # 使用 tqdm 创建一个进度条来可视化处理过程
-    with tqdm(total=len(epub_files), desc="转换进度", unit="个文件") as pbar:
+    # Use tqdm to visualize progress
+    with tqdm(total=len(epub_files), desc="Conversion Progress", unit="file") as pbar:
         for filename in epub_files:
             pbar.set_postfix_str(filename, refresh=True)
             
             source_epub_path = os.path.join(input_dir, filename)
             
-            # 构建输出的 .txt 文件名
+            # Build output .txt filename
             base_name = os.path.splitext(filename)[0]
             output_txt_path = os.path.join(output_dir, f"{base_name}.txt")
             
@@ -129,10 +129,10 @@ def main():
             pbar.update(1)
 
     print("\n----------------------------------------")
-    print(f"[✓] 任务完成！")
-    print(f"    - 成功转换: {success_count} 个文件")
-    print(f"    - 转换失败: {fail_count} 个文件")
-    print(f"    - 结果已保存至 '{OUTPUT_DIR_NAME}' 文件夹。")
+    print(f"[✓] Task completed!")
+    print(f"    - Successfully converted: {success_count} file(s)")
+    print(f"    - Conversion failed: {fail_count} file(s)")
+    print(f"    - Results saved to '{OUTPUT_DIR_NAME}' folder.")
 
 # 当该脚本被直接执行时，运行 main 函数
 if __name__ == '__main__':

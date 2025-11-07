@@ -13,26 +13,26 @@ import html
 import sys
 import json
 
-# --- 屏蔽已知警告 ---
+# --- Suppress known warnings ---
 warnings.filterwarnings("ignore", category=UserWarning, module='ebooklib')
 warnings.filterwarnings("ignore", category=FutureWarning, module='ebooklib')
 warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
 
-# --- 常量定义 ---
+# --- Constants ---
 PROCESSED_DIR_NAME = "processed_files"
 REPORT_DIR_NAME = "compare_reference"
 HIGHLIGHT_STYLE = "background-color: #f1c40f; color: #000; padding: 2px; border-radius: 3px;"
 
 def find_rules_file(directory: Path) -> Path:
-    """在指定目录中查找规则文件。"""
+    """Find the rules.txt file in the specified directory."""
     rules_files = list(directory.glob('rules.txt'))
     if rules_files:
         return rules_files[0]
     return None
 
 def load_rules(rules_file: Path) -> pd.DataFrame:
-    """加载替换规则, 仅支持 .txt 格式。"""
-    print(f"[*] 正在从 {rules_file.name} 加载替换规则...")
+    """Load replacement rules; supports .txt format only."""
+    print(f"[*] Loading replacement rules from {rules_file.name}...")
     rules_list = []
     try:
         with open(rules_file, 'r', encoding='utf-8') as f:
@@ -49,7 +49,7 @@ def load_rules(rules_file: Path) -> pd.DataFrame:
                         original, mode = match_no_replacement.groups()
                         replacement = ""
                     else:
-                        print(f"[!] 警告: 第 {i} 行规则格式不正确，已忽略: \"{line}\"")
+                        print(f"[!] Warning: Rule format invalid at line {i}; ignored: \"{line}\"")
                         continue
                 else:
                     original, replacement, mode = match.groups()
@@ -63,19 +63,19 @@ def load_rules(rules_file: Path) -> pd.DataFrame:
         df = pd.DataFrame(rules_list)
         
         if df.empty:
-            print("[!] 警告: 规则文件为空或所有规则均无效。")
+            print("[!] Warning: Rules file is empty or all rules are invalid.")
         
         return df
 
     except Exception as e:
-        print(f"[!] 加载规则文件失败: {e}")
+        print(f"[!] Failed to load rules file: {e}")
         exit(1)
 
 def process_and_get_changes(content: str, rules: pd.DataFrame) -> tuple[str, list]:
     """
-    核心处理函数：对传入的纯文本进行所有替换。
-    返回元组: (修改后的文本, 原子化变更列表)
-    原子化变更: [{'original_text': '...','replacement_text': '...'}]
+    Core processing: apply all replacements to plain text.
+    Returns a tuple: (modified_text, atomic_change_list)
+    Atomic changes: [{'original_text': '...','replacement_text': '...'}]
     """
     modified_content = content
     atomic_changes = []
@@ -88,28 +88,28 @@ def process_and_get_changes(content: str, rules: pd.DataFrame) -> tuple[str, lis
         search_pattern = re.escape(original) if mode.lower() == 'text' else original
         
         try:
-            # 必须在最新版本的字符串上查找，以处理链式替换
+            # Always search on the latest modified string to handle chained replacements
             matches = list(re.finditer(search_pattern, modified_content))
             if matches:
-                # 记录下每次匹配到的原文和它将被替换成的新文本
+                # Record each matched original and the replacement text it becomes
                 for match in matches:
                     atomic_changes.append({
                         "original_text": match.group(0),
                         "replacement_text": match.expand(replacement)
                     })
-                # 应用本条规则的替换
+                # Apply the replacement for this rule
                 modified_content = re.sub(search_pattern, replacement, modified_content)
         except re.error as e:
-            print(f"\n[!] 正则表达式错误: '{search_pattern}'. 错误: {e}. 跳过。")
+            print(f"\n[!] Regex error: '{search_pattern}'. Error: {e}. Skipped.")
             continue
 
     unique_atomic_changes = [dict(t) for t in {tuple(d.items()) for d in atomic_changes}]
     return modified_content, unique_atomic_changes
 
 def generate_report(report_path: Path, changes_log: list, source_filename: str):
-    """生成HTML格式的变更报告。"""
+    """Generate an HTML change report."""
     if not changes_log:
-        print(f"[!] 没有变更记录，跳过报告生成: {report_path}")
+        print(f"[!] No change records; skipping report generation: {report_path}")
         return
     
     # 获取项目根目录和模板路径
@@ -117,7 +117,7 @@ def generate_report(report_path: Path, changes_log: list, source_filename: str):
     template_path = project_root / 'shared_assets' / 'report_template.html'
     
     if not template_path.exists():
-        print(f"[!] 模板文件不存在: {template_path}")
+        print(f"[!] Template file does not exist: {template_path}")
         return
     
     # 计算从报告文件到shared_assets的相对路径
@@ -128,14 +128,14 @@ def generate_report(report_path: Path, changes_log: list, source_filename: str):
         css_path = f"{relative_path}/report_styles.css".replace('\\', '/')
         js_path = f"{relative_path}/report_scripts.js".replace('\\', '/')
     except ValueError:
-        # 如果无法计算相对路径，使用默认路径
+        # If relative path cannot be computed, use default paths
         css_path = "shared_assets/report_styles.css"
         js_path = "shared_assets/report_scripts.js"
     
-    # 按替换规则归类
+    # Group by replacement rules
     rule_groups = {}
     for change in changes_log:
-        # 提取高亮的原文和替换文本
+        # Extract highlighted original and replacement text
         original_match = re.search(r'<span class="highlight">([^<]+)</span>', change['original'])
         modified_match = re.search(r'<span class="highlight">([^<]+)</span>', change['modified'])
         
@@ -153,14 +153,14 @@ def generate_report(report_path: Path, changes_log: list, source_filename: str):
             
             rule_groups[rule_key]['instances'].append(change)
     
-    # 按实例数量排序
+    # Sort by number of instances
     sorted_rule_groups = sorted(rule_groups.values(), key=lambda x: len(x['instances']), reverse=True)
     total_instances = sum(len(group['instances']) for group in sorted_rule_groups)
     
-    # 读取模板文件
+    # Read template file
     template_content = template_path.read_text(encoding='utf-8')
     
-    # 生成规则列表项
+    # Generate rules list items
     rules_list_items = ""
     for i, group in enumerate(sorted_rule_groups):
         rules_list_items += f'''
@@ -169,11 +169,11 @@ def generate_report(report_path: Path, changes_log: list, source_filename: str):
                             <span class="rule-original">{html.escape(group["original_text"])}</span> → 
                             <span class="rule-replacement">{html.escape(group["replacement_text"])}</span>
                         </div>
-                        <div class="rule-count">{len(group["instances"])} 次</div>
+                        <div class="rule-count">{len(group["instances"])} times</div>
                     </div>
         '''
     
-    # 生成内容区域
+    # Generate content sections
     content_sections = ""
     for group_index, group in enumerate(sorted_rule_groups):
         instance_count = len(group['instances'])
@@ -181,7 +181,7 @@ def generate_report(report_path: Path, changes_log: list, source_filename: str):
             <div class="rule-group" data-group-index="{group_index}">
                 <div class="rule-header" onclick="toggleInstances({group_index})">
                     <div class="rule-title">
-                        <span class="rule-badge">{instance_count} 次</span>
+                        <span class="rule-badge">{instance_count} times</span>
                         <span class="toggle-icon" id="toggle-{group_index}">▼</span>
                     </div>
                     <div class="rule-description">
@@ -193,7 +193,7 @@ def generate_report(report_path: Path, changes_log: list, source_filename: str):
                 <div class="instances-container" id="instances-{group_index}">
         '''
         
-        # 按位置排序实例
+        # Sort instances by position
         sorted_instances = sorted(group['instances'], key=lambda x: x.get('position', 0))
         
         for instance in sorted_instances:
@@ -201,11 +201,11 @@ def generate_report(report_path: Path, changes_log: list, source_filename: str):
                     <div class="instance-item">
                         <div class="instance-content">
                             <div class="original-section">
-                                <div class="section-title">原文</div>
+                                <div class="section-title">Original</div>
                                 <div class="text-content">{instance['original']}</div>
                             </div>
                             <div class="modified-section">
-                                <div class="section-title">修改后</div>
+                                <div class="section-title">Modified</div>
                                 <div class="text-content">{instance['modified']}</div>
                             </div>
                         </div>
@@ -217,7 +217,7 @@ def generate_report(report_path: Path, changes_log: list, source_filename: str):
             </div>
         '''
     
-    # 替换模板中的占位符
+    # Replace placeholders in template
     html_content = template_content.replace('{{source_filename}}', html.escape(source_filename))
     html_content = html_content.replace('{{rules_count}}', str(len(sorted_rule_groups)))
     html_content = html_content.replace('{{total_instances}}', str(total_instances))
@@ -225,18 +225,18 @@ def generate_report(report_path: Path, changes_log: list, source_filename: str):
     html_content = html_content.replace('{{content_sections}}', content_sections)
     html_content = html_content.replace('{{generation_time}}', html.escape(str(__import__('datetime').datetime.now().strftime('%Y-%m-%d %H:%M:%S'))))
     
-    # 替换CSS和JS文件路径
+    # Replace CSS and JS paths
     html_content = html_content.replace('href="shared_assets/report_styles.css"', f'href="{css_path}"')
     html_content = html_content.replace('src="shared_assets/report_scripts.js"', f'src="{js_path}"')
     
     try:
         report_path.write_text(html_content, encoding='utf-8')
-        print(f"[✓] 报告已生成: {report_path}")
+        print(f"[✓] Report generated: {report_path}")
     except Exception as e:
-        print(f"[!] 无法写入报告文件 {report_path}: {e}")
+        print(f"[!] Unable to write report file {report_path}: {e}")
 
 def process_txt_file(file_path: Path, rules: pd.DataFrame, processed_dir: Path, report_dir: Path):
-    """处理单个 .txt 文件。"""
+    """Process a single .txt file."""
     replacement_count = 0
     try:
         content = file_path.read_text(encoding='utf-8')
@@ -279,12 +279,12 @@ def process_txt_file(file_path: Path, rules: pd.DataFrame, processed_dir: Path, 
             return {'modified': True, 'replacement_count': replacement_count, 'css_fixed': False, 'error': None}
 
     except Exception as e:
-        print(f"\n[!] 处理TXT文件失败 {file_path.name}: {e}")
+        print(f"\n[!] Failed to process TXT file {file_path.name}: {e}")
         return {'modified': False, 'replacement_count': 0, 'css_fixed': False, 'error': str(e)}
     return {'modified': False, 'replacement_count': 0, 'css_fixed': False, 'error': None}
 
 def process_epub_file(file_path: Path, rules: pd.DataFrame, processed_dir: Path, report_dir: Path):
-    """处理EPUB文件，采用两阶段处理：1.文本替换 2.CSS链接修复"""
+    """Process EPUB with two-phase workflow: 1) text replacement, 2) CSS link fix."""
     
     changes_log = []
     book_is_modified = False
@@ -292,7 +292,7 @@ def process_epub_file(file_path: Path, rules: pd.DataFrame, processed_dir: Path,
     replacement_count = 0
     
     try:
-        # 第一阶段：使用BeautifulSoup进行文本替换
+        # Phase 1: Use BeautifulSoup for text replacement
         book = epub.read_epub(str(file_path))
         
         for item in book.get_items():
@@ -339,33 +339,33 @@ def process_epub_file(file_path: Path, rules: pd.DataFrame, processed_dir: Path,
                 if item_is_modified:
                     item.set_content(str(soup).encode('utf-8'))
 
-        # 保存第一阶段修复后的EPUB文件
+        # Save EPUB after phase 1 fix
         temp_epub_path = processed_dir / f"temp_{file_path.name}"
         if book_is_modified:
-            # 检查并确保EPUB有必需的identifier元数据
+            # Ensure EPUB has required identifier metadata
             if not book.get_metadata('DC', 'identifier'):
-                # 如果没有identifier，添加一个默认的
+                # If no identifier, add a default one
                 import uuid
                 default_identifier = f"urn:uuid:{uuid.uuid4()}"
                 book.add_metadata('DC', 'identifier', default_identifier)
             
             epub.write_epub(str(temp_epub_path), book, {})
         else:
-            # 如果没有修改，复制原文件作为临时文件
+            # If not modified, copy original as temp file
             shutil.copy2(file_path, temp_epub_path)
         
-        # 第二阶段：修复CSS链接
+        # Phase 2: Fix CSS links
         css_fixed = fix_css_links_in_epub(temp_epub_path, file_path)
         
         if css_fixed:
             book_is_modified = True
         
-        # 将最终文件移动到目标位置
+        # Move final file to destination
         final_epub_path = processed_dir / file_path.name
         if temp_epub_path.exists():
             shutil.move(str(temp_epub_path), str(final_epub_path))
         
-        # 生成报告
+        # Generate report
         if book_is_modified and changes_log:
             unique_changes = [dict(t) for t in {tuple(d.items()) for d in changes_log}]
             report_path = report_dir / f"{file_path.name}.html"
@@ -374,8 +374,8 @@ def process_epub_file(file_path: Path, rules: pd.DataFrame, processed_dir: Path,
         return {'modified': book_is_modified, 'replacement_count': replacement_count, 'css_fixed': css_fixed, 'error': None}
 
     except Exception as e:
-        print(f"\n[!] 处理EPUB文件失败 {file_path.name}: {e}")
-        # 清理临时文件
+        print(f"\n[!] Failed to process EPUB file {file_path.name}: {e}")
+        # Clean temp file
         temp_epub_path = processed_dir / f"temp_{file_path.name}"
         if temp_epub_path.exists():
             temp_epub_path.unlink()
@@ -383,39 +383,39 @@ def process_epub_file(file_path: Path, rules: pd.DataFrame, processed_dir: Path,
 
 
 def fix_css_links_in_epub(epub_path, original_epub_path):
-    """修复EPUB文件中的CSS链接"""
+    """Fix CSS links inside an EPUB file."""
     
-    # 创建临时目录
+    # Create temp directories
     temp_dir = epub_path.parent / f"css_fix_temp_{epub_path.stem}"
     original_temp_dir = epub_path.parent / f"original_temp_{epub_path.stem}"
     
     css_was_fixed = False
     
     try:
-        # 解包修复后的EPUB文件
+        # Unpack fixed EPUB
         temp_dir.mkdir(exist_ok=True)
         with zipfile.ZipFile(epub_path, 'r') as zip_ref:
             zip_ref.extractall(temp_dir)
         
-        # 解包原始EPUB文件
+        # Unpack original EPUB
         original_temp_dir.mkdir(exist_ok=True)
         with zipfile.ZipFile(original_epub_path, 'r') as zip_ref:
             zip_ref.extractall(original_temp_dir)
         
-        # 查找所有HTML/XHTML文件
+        # Find all HTML/XHTML files
         html_files = []
         for root, dirs, files in os.walk(temp_dir):
             for file in files:
                 if file.endswith(('.html', '.xhtml')):
                     html_files.append(os.path.join(root, file))
         
-        # 处理每个HTML文件
+        # Process each HTML file
         for html_file_path in html_files:
-            # 读取修复后的文件内容
+            # Read fixed file content
             with open(html_file_path, 'r', encoding='utf-8') as f:
                 fixed_content = f.read()
             
-            # 找到对应的原始文件
+            # Find the corresponding original file
             relative_path = os.path.relpath(html_file_path, temp_dir)
             original_file_path = original_temp_dir / relative_path
             
@@ -423,12 +423,12 @@ def fix_css_links_in_epub(epub_path, original_epub_path):
                 with open(original_file_path, 'r', encoding='utf-8') as f:
                     original_content = f.read()
                 
-                # 检查原始文件是否有CSS链接
+                # Check if original file has CSS links
                 original_css_links = re.findall(r'<link[^>]*href=["\']([^"\'>]*\.css)["\'][^>]*>', original_content, re.IGNORECASE)
                 
                 if original_css_links:
 
-                    # 检查修复后的文件是否缺失CSS链接
+                    # Check whether fixed file misses any CSS links
                     missing_links = []
                     for css_link in original_css_links:
                         if css_link not in fixed_content:
@@ -436,34 +436,34 @@ def fix_css_links_in_epub(epub_path, original_epub_path):
                     
                     if missing_links:
                         
-                        # 从原始文件中提取完整的head标签
+                        # Extract full head tag from original
                         original_head_match = re.search(r'<head[^>]*>.*?</head>', original_content, re.DOTALL | re.IGNORECASE)
                         if original_head_match:
                             original_head_content = original_head_match.group(0)
                             
-                            # 在修复后的文件中查找head标签并替换
+                            # Find head tag in fixed file and replace
                             fixed_head_match = re.search(r'<head[^>]*>.*?</head>', fixed_content, re.DOTALL | re.IGNORECASE)
                             if fixed_head_match:
                                 fixed_content = fixed_content.replace(fixed_head_match.group(0), original_head_content)
                                 css_was_fixed = True
                             else:
-                                # 查找自闭合的head标签
+                                # Handle self-closing head tag
                                 head_self_closing_match = re.search(r'<head\s*\/>', fixed_content, re.IGNORECASE)
                                 if head_self_closing_match:
                                     fixed_content = fixed_content.replace(head_self_closing_match.group(0), original_head_content)
                                     css_was_fixed = True
                             
-                            # 保存修复后的文件
+                            # Save fixed file
                             if css_was_fixed:
                                 with open(html_file_path, 'w', encoding='utf-8') as f:
                                     f.write(fixed_content)
         
-        # 如果有CSS被修复，重新打包EPUB文件
+        # Repack EPUB if CSS was fixed
         if css_was_fixed:
-            # 删除原有的EPUB文件
+            # Delete original EPUB file
             epub_path.unlink()
             
-            # 重新创建EPUB文件
+            # Create EPUB again
             with zipfile.ZipFile(epub_path, 'w', zipfile.ZIP_DEFLATED) as zip_ref:
                 for root, dirs, files in os.walk(temp_dir):
                     for file in files:
@@ -472,9 +472,9 @@ def fix_css_links_in_epub(epub_path, original_epub_path):
                         zip_ref.write(file_path, arc_name)
         
     except Exception as e:
-        print(f"[!] CSS链接修复失败: {e}")
+        print(f"[!] CSS link fix failed: {e}")
     finally:
-        # 清理临时目录
+        # Clean temp directories
         if temp_dir.exists():
             shutil.rmtree(temp_dir)
         if original_temp_dir.exists():
@@ -483,41 +483,41 @@ def fix_css_links_in_epub(epub_path, original_epub_path):
     return css_was_fixed
 
 def load_default_path_from_settings():
-    """从共享设置文件中读取默认工作目录。"""
+    """Read the default work directory from the shared settings file."""
     try:
-        # 向上导航两级以到达项目根目录
+        # Navigate up two levels to reach the project root
         project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         settings_path = os.path.join(project_root, 'shared_assets', 'settings.json')
         with open(settings_path, 'r', encoding='utf-8') as f:
             settings = json.load(f)
-        # 如果 "default_work_dir" 存在且不为空，则返回它
+        # If "default_work_dir" exists and is non-empty, return it
         default_dir = settings.get("default_work_dir")
         return default_dir if default_dir else "."
     except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
-        print(f"警告：读取 settings.json 失败 ({e})，将使用用户主目录下的 'Downloads' 作为备用路径。")
-        # 提供一个通用的备用路径
+        print(f"Warning: Failed to read settings.json ({e}); using 'Downloads' in the user home as fallback.")
+        # Provide a generic fallback path
         return os.path.join(os.path.expanduser("~"), "Downloads")
 
 def main():
-    """主函数"""
+    """Main function"""
     # 动态加载默认路径
     default_path = load_default_path_from_settings()
     
     prompt_message = (
-        f"请输入包含源文件和规则文件的文件夹路径。\n"
-        f"(直接按 Enter 键，将使用默认路径 '{default_path}') : "
+        f"Please enter the folder path containing source files and rules.\n"
+        f"(Press Enter to use the default path '{default_path}'): "
     )
     user_input = input(prompt_message)
 
     if not user_input.strip():
         directory_path = default_path
-        print(f"[*] 未输入路径，已使用默认路径: {directory_path}")
+        print(f"[*] No input provided; using default path: {directory_path}")
     else:
         directory_path = user_input.strip()
 
     base_dir = Path(directory_path)
     if not base_dir.is_dir():
-        print(f"[!] 错误: 文件夹 '{base_dir}' 不存在。")
+        print(f"[!] Error: Folder '{base_dir}' does not exist.")
         return
 
     processed_dir = base_dir / PROCESSED_DIR_NAME
@@ -525,37 +525,37 @@ def main():
     processed_dir.mkdir(exist_ok=True)
     report_dir.mkdir(exist_ok=True)
 
-    print(f"[*] 工作目录: {base_dir}")
-    print(f"[*] 输出文件夹已准备就绪:\n    - 处理后文件: {processed_dir}\n    - 变更报告: {report_dir}")
+    print(f"[*] Working directory: {base_dir}")
+    print(f"[*] Output folders ready:\n    - Processed files: {processed_dir}\n    - Change reports: {report_dir}")
 
     rules_file = find_rules_file(base_dir)
     if not rules_file:
-        print("[!] 错误: 在指定文件夹中未找到 'rules.txt' 格式的规则文件。")
+        print("[!] Error: No 'rules.txt' rules file found in the specified folder.")
         return
     
-    print("[*] 正在从 rules.txt 加载替换规则...")
+    print("[*] Loading replacement rules from rules.txt...")
     rules = load_rules(rules_file)
 
     if rules.empty:
-        print("[!] 规则为空，未执行任何替换。")
+        print("[!] Rules are empty; no replacements performed.")
         return
 
     all_target_files = list(base_dir.glob('*.txt')) + list(base_dir.glob('*.epub'))
     files_to_process = [f for f in all_target_files if f.resolve() != rules_file.resolve()]
 
     if not files_to_process:
-        print("[!] 在指定文件夹中没有找到任何需要处理的 .txt 或 .epub 文件。")
+        print("[!] No .txt or .epub files found in the specified folder.")
         return
 
-    print(f"[+] 成功加载 {len(rules)} 条规则。")
-    print(f"[*] 发现 {len(files_to_process)} 个待处理文件。")
+    print(f"[+] Successfully loaded {len(rules)} rules.")
+    print(f"[*] Found {len(files_to_process)} files to process.")
     print()
 
     # 收集处理统计信息
     processing_results = []
     modified_count = 0
     
-    with tqdm(total=len(files_to_process), desc="处理进度", unit="个文件") as pbar:
+    with tqdm(total=len(files_to_process), desc="Processing progress", unit="file(s)") as pbar:
         for file_path in files_to_process:
             pbar.set_postfix_str(file_path.name, refresh=True)
             
@@ -564,7 +564,7 @@ def main():
             elif file_path.suffix == '.epub':
                 result = process_epub_file(file_path, rules, processed_dir, report_dir)
             else:
-                result = {'modified': False, 'replacement_count': 0, 'css_fixed': False, 'error': '不支持的文件类型'}
+                result = {'modified': False, 'replacement_count': 0, 'css_fixed': False, 'error': 'Unsupported file type'}
             
             # 添加文件信息到结果中
             result['filename'] = file_path.name
@@ -578,11 +578,11 @@ def main():
 
     # 以表格形式显示处理结果
     print("\n" + "="*80)
-    print("处理结果汇总表")
+    print("Processing Results Summary")
     print("="*80)
     
     # 表头
-    print(f"{'文件名':<40} {'类型':<6} {'替换次数':<8} {'CSS修复':<8} {'状态':<10}")
+    print(f"{'Filename':<40} {'Type':<6} {'Replacements':<12} {'CSS Fixed':<10} {'Status':<10}")
     print("-"*80)
     
     # 表格内容
@@ -593,20 +593,20 @@ def main():
         
         file_type = result['file_type']
         replacement_count = result['replacement_count']
-        css_fixed = "是" if result['css_fixed'] else "否"
+        css_fixed = "Yes" if result['css_fixed'] else "No"
         
         if result['error']:
-            status = "失败"
+            status = "Failed"
         elif result['modified']:
-            status = "已修改"
+            status = "Modified"
         else:
-            status = "无变化"
+            status = "Unchanged"
         
-        print(f"{filename:<40} {file_type:<6} {replacement_count:<8} {css_fixed:<8} {status:<10}")
+        print(f"{filename:<40} {file_type:<6} {replacement_count:<12} {css_fixed:<10} {status:<10}")
     
     print("-"*80)
-    print(f"总计: {len(files_to_process)} 个文件 | 修改: {modified_count} 个 | 总替换次数: {sum(r['replacement_count'] for r in processing_results)}")
-    print(f"结果已保存至 '{PROCESSED_DIR_NAME}' 和 '{REPORT_DIR_NAME}' 文件夹")
+    print(f"Total: {len(files_to_process)} files | Modified: {modified_count} | Total replacements: {sum(r['replacement_count'] for r in processing_results)}")
+    print(f"Results saved in '{PROCESSED_DIR_NAME}' and '{REPORT_DIR_NAME}' folders")
     print("="*80)
 
 if __name__ == '__main__':

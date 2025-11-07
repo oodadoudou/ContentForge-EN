@@ -1,42 +1,42 @@
 ============================================================
-模块三: 电子书工坊 (03_ebook_workshop)
-【简介】
-本模块是您的电子书“创作中心”，提供了一系列强大的工具，用于
-从零创建、编辑、分割和美化电子书（EPUB/TXT/HTML）文件。
+Module 3: Ebook Workshop (03_ebook_workshop)
+[Overview]
+This module is your ebook "creation hub", offering a suite of powerful tools to
+create, edit, split, and style ebook files (EPUB/TXT/HTML) from scratch.
 
-【使用方法】
+[How to Use]
 本模块的所有功能都已整合到主菜单中。
 
 在终端中，运行 python main.py。
 
-在主菜单选择 "3. 电子书处理与生成 (TXT/EPUB/HTML)"。
+In the main menu, choose "3. Ebook processing and generation (TXT/EPUB/HTML)".
 
 根据子菜单的提示选择您需要的功能。
 
---------------------- 功能与用法详解 ---------------------
+--------------------- Features and Usage Details ---------------------
 
---- 创建与转换 ---
-1. [创建] 从 TXT 创建带章节目录的 EPUB (⭐新增样式选择)
+--- Create & Convert ---
+1. [Create] Create an EPUB with chapter TOC from TXT (⭐New style selections)
 
-对应脚本: txt_to_epub_convertor.py
+Script: txt_to_epub_convertor.py
 
-功能: 能够智能地将一个纯文本（TXT）文件转换为一个带有封面、章节目录、可自定义样式的标准 EPUB 电子书。
+Function: Intelligently converts a plain text (TXT) file into a standard EPUB ebook with cover, chapter TOC, and customizable styles.
 
-✨ 最新功能升级 (v2.0):
-- 🎨 5种精美样式选择：经典简约、温馨护眼、现代清新、优雅古典、简洁现代
-- 👀 实时样式预览：选择样式后可在浏览器中预览效果
-- 📐 统一字体规范：所有样式采用统一的字体大小设置（p=1em, h1=1.3em, h2=1.25em等）
-- 📖 段落首行缩进：所有样式均支持2em首行缩进，提升阅读体验
-- 🎯 目录样式优化：深灰色字体、无序号、鼠标悬停显示下划线
-- 🖼️ 自定义封面：支持上传自定义封面图片
-- 🔧 智能章节识别：自动检测和处理章节结构
+✨ Latest Enhancements (v2.0):
+- 🎨 Five polished style options: Classic Minimal, Warm Eye-care, Modern Fresh, Elegant Vintage, Clean Modern
+- 👀 Live style preview: preview selected style in your browser
+- 📐 Unified font sizing: standardized font sizes across styles (p=1em, h1=1.3em, h2=1.25em, etc.)
+- 📖 First-line indentation: all styles support 2em indent to improve readability
+- 🎯 TOC style refinements: dark gray text, no numbering, underline on hover
+- 🖼️ Custom cover: supports uploading your own cover image
+- 🔧 Smart chapter detection: automatically detects and handles chapter structure
 
-样式特色:
-- 经典简约：传统serif字体，蓝色标题边框，适合正式文档
-- 温馨护眼：暖色调设计，棕色装饰线，护眼阅读体验
-- 现代清新：sans-serif字体，彩色左边框，现代简洁风格
-- 优雅古典：古典边框设计，棕色主题，典雅大方
-- 简洁现代：极简设计，大写标题，干净利落
+Style highlights:
+- Classic Minimal: traditional serif fonts, blue title borders, suited for formal documents
+- Warm Eye-care: warm palette, brown decorative lines, comfortable reading
+- Modern Fresh: sans-serif fonts, colorful left border, modern and clean
+- Elegant Vintage: classic border design, brown theme, elegant and tasteful
+- Clean Modern: minimalist design, uppercase titles, crisp and clean
 
 准备工作: 为了让脚本能正确识别目录，您需要使用特定格式来标记章节标题。脚本默认的规则是：
 

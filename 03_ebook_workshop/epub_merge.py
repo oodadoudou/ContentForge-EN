@@ -52,8 +52,8 @@ def sanitize_filename(name):
 
 def load_default_path():
     """
-    从共享设置文件中读取默认工作目录，如果失败则返回用户下载文件夹。
-    逻辑参考自用户提供的 epub_toolkit.py。
+    Read the default working directory from the shared settings file; if not available,
+    fall back to the user's Downloads folder. Logic aligned with epub_toolkit.py.
     """
     try:
         # 假设项目结构为 .../ProjectRoot/scripts/script.py
@@ -68,8 +68,8 @@ def load_default_path():
             if default_dir and os.path.isdir(default_dir):
                 return default_dir
     except Exception as e:
-        # 在 debug 模式下记录错误，但不中断程序
-        logger.debug(f"读取共享设置失败: {e}")
+        # Log in debug mode but do not interrupt program
+        logger.debug(f"Failed to read shared settings: {e}")
     
     # 最终回退到用户的下载文件夹
     return os.path.join(os.path.expanduser("~"), "Downloads")
@@ -104,18 +104,18 @@ class EpubMerger:
     def run(self):
         """Executes the entire merge process."""
         try:
-            logger.info(f"创建临时工作目录: {self.temp_dir}")
+            logger.info(f"Creating temporary working directory: {self.temp_dir}")
             
             self._unpack_all()
             self._process_books()
             self._repack_epub()
             
-            logger.info(f"🎉 合并成功! 文件保存在: {self.output_path}")
+            logger.info(f"🎉 Merge succeeded! File saved at: {self.output_path}")
 
         except Exception as e:
-            logger.error(f"合并过程中发生严重错误: {e}", exc_info=True)
+            logger.error(f"A critical error occurred during merge: {e}", exc_info=True)
         finally:
-            logger.info("清理临时文件...")
+            logger.info("Cleaning up temporary files...")
             shutil.rmtree(self.temp_dir)
 
     def _unpack_all(self):
@@ -124,7 +124,7 @@ class EpubMerger:
             book_dir = os.path.join(self.temp_dir, f"book_{i+1}")
             os.makedirs(book_dir, exist_ok=True)
             self.book_dirs.append(book_dir)
-            logger.info(f"解包 ({i+1}/{len(self.input_files)}): {os.path.basename(epub_path)} -> {os.path.basename(book_dir)}/")
+            logger.info(f"Unpacking ({i+1}/{len(self.input_files)}): {os.path.basename(epub_path)} -> {os.path.basename(book_dir)}/")
             with ZipFile(epub_path, 'r') as zip_ref:
                 zip_ref.extractall(book_dir)
 
@@ -132,12 +132,12 @@ class EpubMerger:
         """Processes each unpacked book directory to gather data and copy files."""
         for i, book_dir in enumerate(self.book_dirs):
             book_num = i + 1
-            logger.info(f"处理解包后的书籍 #{book_num}...")
+            logger.info(f"Processing unpacked book #{book_num}...")
             
             try:
                 container_path = os.path.join(book_dir, "META-INF", "container.xml")
                 if not os.path.exists(container_path):
-                    logger.warning(f"  书籍 #{book_num} 缺少 container.xml，跳过此书。")
+                    logger.warning(f"  Book #{book_num} is missing container.xml; skipping this book.")
                     continue
                 
                 with open(container_path, 'rb') as f:
@@ -185,9 +185,9 @@ class EpubMerger:
                         self.metadata["cover_full_path"] = full_src_path
                         self.metadata["cover_href"] = href
                         self.metadata["cover_media_type"] = cover_item.getAttribute("media-type")
-                        logger.info(f"  找到封面图片: {href}")
+                        logger.info(f"  Found cover image: {href}")
                     else:
-                        logger.warning(f"  封面在 manifest 中声明，但文件未找到: {full_src_path}")
+                        logger.warning(f"  Cover declared in manifest, but file not found: {full_src_path}")
 
     def _process_manifest(self, opf_dom, opf_dir, book_num):
         """Copies files and creates new manifest entries."""
@@ -210,7 +210,7 @@ class EpubMerger:
                 new_id = f"b{book_num}_{item_id}"
                 self.manifest_items.append({"id": new_id, "href": href_new, "media-type": media_type})
             else:
-                logger.warning(f"  文件在 manifest 中声明但未找到: {src_path}")
+                logger.warning(f"  File declared in manifest but not found: {src_path}")
     
     def _process_spine(self, opf_dom, book_num):
         """Gathers spine items."""
@@ -283,7 +283,7 @@ class EpubMerger:
 
     def _repack_epub(self):
         """Builds the final OPF, NCX, and zips everything into a new EPUB."""
-        logger.info("构建最终的 EPUB 文件...")
+        logger.info("Building the final EPUB file...")
         
         if self.metadata.get("cover_full_path"):
             cover_src_path = self.metadata["cover_full_path"]
@@ -386,7 +386,7 @@ class EpubMerger:
             cover_nav = new_tag(dom, "navPoint", attrs={"id": "nav-cover", "playOrder": str(play_order)})
             play_order += 1
             nav_label = new_tag(dom, "navLabel")
-            nav_label.appendChild(new_tag(dom, "text", text="封面"))
+            nav_label.appendChild(new_tag(dom, "text", text="Cover"))
             cover_nav.appendChild(nav_label)
             cover_nav.appendChild(new_tag(dom, "content", attrs={"src": "cover.xhtml"}))
             navmap.appendChild(cover_nav)
@@ -417,28 +417,28 @@ class EpubMerger:
 def run_epub_merge_ui():
     """Main function to run the tool with user interaction."""
     print("=========================================================")
-    print("=      增强版 EPUB 合并工具 (解包-整合-打包)      =")
+    print("=      Enhanced EPUB Merge Tool (Unpack-Integrate-Repack)      =")
     print("=========================================================")
-    print("功能：将指定文件夹内的所有 EPUB 文件彻底解包后重新合并。")
-    print("      此方法更稳定，能更好地处理不同结构的 EPUB 文件。")
+    print("Features: Thoroughly unpack and re-merge all EPUB files in a folder.")
+    print("          More robust for handling varied EPUB structures.")
 
     # --- 功能更新 1: 默认开启 DEBUG 模式 ---
     logger.setLevel(logging.DEBUG)
-    print("\n--- 详细日志 (DEBUG 模式) 已默认启用 ---")
+    print("\n--- Detailed logs (DEBUG mode) enabled by default ---")
 
     # --- 功能更新 3: 使用新的默认路径读取逻辑 ---
     default_path = load_default_path()
-    input_directory = input(f"\n请输入 EPUB 文件夹路径 (默认为: {default_path}): ").strip() or default_path
+    input_directory = input(f"\nEnter the folder path containing EPUB files (default: {default_path}): ").strip() or default_path
 
     if not os.path.isdir(input_directory):
-        sys.exit(f"\n错误：文件夹 '{input_directory}' 不存在。")
+        sys.exit(f"\nError: Folder '{input_directory}' does not exist.")
 
     all_epub_files = sorted(
         [f for f in os.listdir(input_directory) if f.lower().endswith('.epub')],
         key=natural_sort_key
     )
     
-    output_filename_input = input("\n请输入新 EPUB 的文件名 (例如: 我的合集.epub): ").strip()
+    output_filename_input = input("\nEnter the new EPUB filename (e.g., My Collection.epub): ").strip()
     output_filename = sanitize_filename(output_filename_input) if output_filename_input else "merged_epubs.epub"
     if not output_filename.lower().endswith('.epub'):
         output_filename += '.epub'
@@ -449,23 +449,23 @@ def run_epub_merge_ui():
     files_to_merge_names = [f for f in all_epub_files if f != output_filename]
 
     if not files_to_merge_names:
-        sys.exit(f"\n错误: 在 '{input_directory}' 中没有找到可供合并的 EPUB 文件。")
+        sys.exit(f"\nError: No EPUB files found to merge in '{input_directory}'.")
 
     # --- 功能更新 2: 交互式排序 ---
     while True:
         print("\n" + "="*80)
-        print(f"  检测到以下文件，将按此顺序合并 (共 {len(files_to_merge_names)} 个):")
+        print(f"  Detected the following files; will merge in this order (total {len(files_to_merge_names)}):")
         print("-"*80)
-        print(f"  {'序号':<4} | 文件名")
+        print(f"  {'No.':<4} | Filename")
         print(f"  {'-'*4} | {'-'*73}")
         for i, filename in enumerate(files_to_merge_names, 1):
             # 直接打印完整文件名，不再截断
             print(f"  {i:<4} | {filename}")
         print("="*80)
 
-        reorder_input = input("\n此顺序是否正确？(Y/n): ").lower().strip()
+        reorder_input = input("\nIs this order correct? (Y/n): ").lower().strip()
         if reorder_input == 'n':
-            print("\n请输入新的顺序号，以空格分隔 (例如: 1 3 2 4)")
+            print("\nEnter new order numbers, space-separated (e.g., 1 3 2 4)")
             new_order_str = input("> ").strip()
             try:
                 # 将用户输入的序号（从1开始）转换成列表索引（从0开始）
@@ -483,23 +483,23 @@ def run_epub_merge_ui():
                 original_list = list(files_to_merge_names)
                 files_to_merge_names = [original_list[i] for i in new_order_indices]
                 
-                print("\n✅ 顺序已更新。")
+                print("\n✅ Order updated.")
                 # 循环将继续，并显示新的顺序供用户再次确认
             
             except ValueError as e:
-                print(f"\n❌ 错误: {e} 请重试。")
+                print(f"\n❌ Error: {e} Please try again.")
                 # 继续循环，让用户重新输入
         
         elif reorder_input in ('y', ''):
-            print("\n顺序已确认。")
+            print("\nOrder confirmed.")
             break # 顺序正确，跳出循环
         
         else:
-            print("无效输入，请输入 'y' 或 'n'。")
+            print("Invalid input; please enter 'y' or 'n'.")
     
-    confirm = input(f"\n即将开始合并，输出文件为 '{output_filename}'。\n确认开始吗？(Y/n): ").lower().strip()
+    confirm = input(f"\nAbout to start merging; output file will be '{output_filename}'.\nProceed? (Y/n): ").lower().strip()
     if confirm == 'n':
-        sys.exit("操作已取消。")
+        sys.exit("Operation canceled.")
         
     print("-" * 20)
 

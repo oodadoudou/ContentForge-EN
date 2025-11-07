@@ -144,13 +144,13 @@ def create_html_from_markdown(target_path):
     """
 
     try:
-        # --- 修改：动态构建 highlight.min.js 的路径 ---
+        # --- Update: Dynamically build the path to highlight.min.js ---
         project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         highlight_js_path = os.path.join(project_root, "shared_assets", "highlight.min.js")
         with open(highlight_js_path, "rb") as f:
             highlight_js_b64 = base64.b64encode(f.read()).decode('utf-8')
     except FileNotFoundError:
-        print("警告: 'shared_assets/highlight.min.js' 未找到。代码高亮将无法正常工作。")
+        print("Warning: 'shared_assets/highlight.min.js' not found. Code highlighting may not work properly.")
         highlight_js_b64 = ""
 
     for md_file_path in md_files:
@@ -187,9 +187,9 @@ def create_html_from_markdown(target_path):
     print("\nAll files processed successfully!")
 
 
-# --- 新增：函数用于从 settings.json 加载默认路径 ---
+# --- Added: Function to load default path from settings.json ---
 def load_default_path_from_settings():
-    """从共享设置文件中读取默认工作目录。"""
+    """Read the default work directory from the shared settings file."""
     try:
         project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         settings_path = os.path.join(project_root, 'shared_assets', 'settings.json')
@@ -200,21 +200,21 @@ def load_default_path_from_settings():
     except Exception:
         return os.path.join(os.path.expanduser("~"), "Downloads")
 
-# --- 修改：主程序块使用交互式输入 ---
+# --- Update: Main block uses interactive input ---
 if __name__ == '__main__':
     default_path = load_default_path_from_settings()
     
     prompt_message = (
-        f"请输入包含 Markdown (.md) 文件的文件夹路径。\n"
-        f"(直接按 Enter 键，将使用默认路径 '{default_path}') : "
+        f"Please enter the folder path containing Markdown (.md) files.\n"
+        f"(Press Enter to use the default path '{default_path}'): "
     )
     user_input = input(prompt_message)
 
     target_directory = user_input.strip() if user_input.strip() else default_path
     
     if not target_directory:
-        print("错误：未提供有效路径。")
+        print("Error: No valid path provided.")
         sys.exit(1)
 
-    print(f"[*] 已选择工作目录: {os.path.abspath(target_directory)}")
+    print(f"[*] Selected working directory: {os.path.abspath(target_directory)}")
     create_html_from_markdown(target_directory)

@@ -124,7 +124,7 @@ def merge_to_long_image(source_project_dir, output_long_image_dir, long_image_fi
         print(f"    Error: Failed to save merged long image: {e}")
         return None
 
-# ▼▼▼ V4 核心函数 - 两阶段色彩同质性分析 ▼▼▼
+# ▼▼▼ V4 Core Function - Two-stage color homogeneity analysis ▼▼▼
 def get_dominant_color_numpy(pixels_quantized):
     """[V4 performance core] Use pure NumPy to find the dominant color from quantized pixel blocks."""
     if pixels_quantized.size == 0:
@@ -191,13 +191,13 @@ def split_long_image_v4(long_image_path, output_split_dir, quantization_factor, 
             for y in candidate_indices:
                 center_dominant_color = candidate_dominant_colors[y]
                 
-                # 分析左边缘
+                # Analyze left edge
                 left_pixels = quantized_array[y, :margin_width]
                 left_dominant_color, left_color_count = get_dominant_color_numpy(left_pixels)
                 if left_color_count > max_unique_colors or left_dominant_color != center_dominant_color:
                     continue
 
-                # 分析右边缘
+                # Analyze right edge
                 right_pixels = quantized_array[y, -margin_width:]
                 right_dominant_color, right_color_count = get_dominant_color_numpy(right_pixels)
                 if right_color_count > max_unique_colors or right_dominant_color != center_dominant_color:
@@ -412,16 +412,16 @@ if __name__ == "__main__":
         else:
             print(f"Error: Path '{abs_path_to_check}' is not a valid directory or does not exist.")
 
-    # 根据根目录名称创建唯一的PDF输出文件夹
+    # Create a unique PDF output folder based on the root directory name
     root_dir_basename = os.path.basename(os.path.abspath(root_input_dir))
     overall_pdf_output_dir = os.path.join(root_input_dir, f"{root_dir_basename}_pdfs")
     os.makedirs(overall_pdf_output_dir, exist_ok=True)
     
-    # 创建用于存放成功处理项目的文件夹
+    # Create a folder to store successfully processed projects
     success_move_target_dir = os.path.join(root_input_dir, SUCCESS_MOVE_SUBDIR_NAME)
     os.makedirs(success_move_target_dir, exist_ok=True)
 
-    # 扫描要处理的项目子文件夹，排除脚本的管理文件夹
+    # Scan project subfolders to process, excluding script management folders
     subdirectories = [d for d in os.listdir(root_input_dir)
                       if os.path.isdir(os.path.join(root_input_dir, d)) and \
                          d != SUCCESS_MOVE_SUBDIR_NAME and \
@@ -429,20 +429,20 @@ if __name__ == "__main__":
                          not d.startswith('.')]
 
     if not subdirectories:
-        print(f"\n在根目录 '{root_input_dir}' 中未找到可处理的项目子文件夹。")
+        print(f"\nNo processable project subfolders found in root directory '{root_input_dir}'.")
         sys.exit()
 
     sorted_subdirectories = natsort.natsorted(subdirectories)
-    print(f"\n将按顺序处理以下 {len(sorted_subdirectories)} 个项目文件夹: {', '.join(sorted_subdirectories)}")
+    print(f"\nWill process the following {len(sorted_subdirectories)} project folders in order: {', '.join(sorted_subdirectories)}")
     failed_subdirs_list = []
 
     for i, subdir_name in enumerate(sorted_subdirectories):
-        print(f"\n\n{'='*10} 开始处理项目: {subdir_name} ({i+1}/{len(sorted_subdirectories)}) {'='*10}")
+        print(f"\n\n{'='*10} Starting project: {subdir_name} ({i+1}/{len(sorted_subdirectories)}) {'='*10}")
         current_processing_subdir = os.path.join(root_input_dir, subdir_name)
         path_long_image_output_dir = os.path.join(current_processing_subdir, MERGED_LONG_IMAGE_SUBDIR_NAME)
         path_split_images_output_dir = os.path.join(current_processing_subdir, SPLIT_IMAGES_SUBDIR_NAME)
         
-        # 每次都清理旧的中间文件，以防上次失败残留
+        # Always clean old intermediate files to avoid residuals from previous failures
         if os.path.isdir(path_long_image_output_dir): shutil.rmtree(path_long_image_output_dir)
         if os.path.isdir(path_split_images_output_dir): shutil.rmtree(path_split_images_output_dir)
 
@@ -453,7 +453,7 @@ if __name__ == "__main__":
 
         pdf_created_for_this_subdir = False
         if created_long_image_path:
-            # ▼▼▼ 调用 V4 两阶段分割函数 ▼▼▼
+            # ▼▼▼ Call V4 two-stage split function ▼▼▼
             split_segment_paths = split_long_image_v4(
                 created_long_image_path, path_split_images_output_dir,
                 QUANTIZATION_FACTOR, MAX_UNIQUE_COLORS_IN_BG,
@@ -470,39 +470,40 @@ if __name__ == "__main__":
                     created_pdf_path = create_pdf_from_images(
                         repacked_final_paths, overall_pdf_output_dir, f"{subdir_name}.pdf"
                     )
-                    if created_pdf_path: pdf_created_for_this_subdir = True
+                    if created_pdf_path:
+                        pdf_created_for_this_subdir = True
 
         if pdf_created_for_this_subdir:
             cleanup_intermediate_dirs(path_long_image_output_dir, path_split_images_output_dir)
             
-            # --- 新增功能：移动处理成功的文件夹 ---
-            print(f"\n  --- 步骤 5: 移动已成功处理的项目文件夹 ---")
+            # --- New feature: Move successfully processed project folders ---
+            print(f"\n  --- Step 5: Move successfully processed project folder ---")
             source_folder_to_move = current_processing_subdir
             destination_parent_folder = success_move_target_dir
             
             try:
-                print(f"    准备将 '{os.path.basename(source_folder_to_move)}' 移动到 '{os.path.basename(destination_parent_folder)}' 文件夹中...")
+                print(f"    Preparing to move '{os.path.basename(source_folder_to_move)}' into folder '{os.path.basename(destination_parent_folder)}'...")
                 shutil.move(source_folder_to_move, destination_parent_folder)
                 moved_path = os.path.join(destination_parent_folder, os.path.basename(source_folder_to_move))
-                print(f"    成功移动文件夹至: {moved_path}")
+                print(f"    Successfully moved folder to: {moved_path}")
             except Exception as e:
-                print(f"    错误: 移动文件夹 '{os.path.basename(source_folder_to_move)}' 失败: {e}")
+                print(f"    Error: Failed to move folder '{os.path.basename(source_folder_to_move)}': {e}")
                 if subdir_name not in failed_subdirs_list:
-                    failed_subdirs_list.append(f"{subdir_name} (移动失败)")
+                    failed_subdirs_list.append(f"{subdir_name} (Move failed)")
 
         else:
-            print(f"  ❌ 项目文件夹 '{subdir_name}' 未能成功生成PDF，将保留中间文件以供检查。")
+            print(f"  ❌ Project folder '{subdir_name}' did not successfully generate a PDF; intermediate files retained for inspection.")
             failed_subdirs_list.append(subdir_name)
 
-        print(f"{'='*10} '{subdir_name}' 处理完毕 {'='*10}")
-        print_progress_bar(i + 1, len(sorted_subdirectories), prefix="总进度:", suffix='完成', length=40)
+        print(f"{'='*10} Project '{subdir_name}' processing complete {'='*10}")
+        print_progress_bar(i + 1, len(sorted_subdirectories), prefix="Total progress:", suffix='Done', length=40)
 
-    print("\n" + "=" * 70 + "\n【任务总结报告】\n" + "-" * 70)
+    print("\n" + "=" * 70 + "\n[Task Summary Report]\n" + "-" * 70)
     success_count = len(sorted_subdirectories) - len(failed_subdirs_list)
-    print(f"总计处理项目: {len(sorted_subdirectories)} 个\n  - ✅ 成功: {success_count} 个\n  - ❌ 失败: {len(failed_subdirs_list)} 个")
+    print(f"Total projects processed: {len(sorted_subdirectories)}\n  - ✅ Success: {success_count}\n  - ❌ Failed: {len(failed_subdirs_list)}")
     if failed_subdirs_list:
-        print("\n失败项目列表 (已保留在原位):\n" + "\n".join(f"  - {d}" for d in failed_subdirs_list))
+        print("\nFailed projects (retained in place):\n" + "\n".join(f"  - {d}" for d in failed_subdirs_list))
     print("-" * 70)
-    print(f"所有成功生成的PDF文件（如有）已保存在: {overall_pdf_output_dir}")
-    print(f"所有成功处理的原始项目文件夹（如有）已移至: {success_move_target_dir}")
-    print("脚本执行完毕。")
+    print(f"All successfully generated PDFs (if any) are saved in: {overall_pdf_output_dir}")
+    print(f"All successfully processed original project folders (if any) have been moved to: {success_move_target_dir}")
+    print("Script execution complete.")

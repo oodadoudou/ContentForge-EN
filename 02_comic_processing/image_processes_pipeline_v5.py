@@ -170,7 +170,7 @@ def merge_to_long_image(source_project_dir, output_long_image_dir, long_image_fi
     image_filepaths = []
     try:
         for dirpath, _, filenames in os.walk(source_project_dir):
-            # 确保不扫描脚本自己创建的中间文件夹
+            # Ensure we do not scan intermediate folders created by the script itself
             if MERGED_LONG_IMAGE_SUBDIR_NAME in dirpath or SPLIT_IMAGES_SUBDIR_NAME in dirpath:
                 continue
             
@@ -185,7 +185,7 @@ def merge_to_long_image(source_project_dir, output_long_image_dir, long_image_fi
         print(f"    No eligible images found in '{os.path.basename(source_project_dir)}' or its subdirectories.")
         return None
 
-    # 对收集到的所有完整路径进行自然排序
+    # Perform natural sorting on collected full paths
     sorted_image_filepaths = natsort.natsorted(image_filepaths)
 
     images_data = []
@@ -193,8 +193,8 @@ def merge_to_long_image(source_project_dir, output_long_image_dir, long_image_fi
     max_calculated_width = 0
 
     total_files_to_analyze = len(sorted_image_filepaths)
-        if total_files_to_analyze > 0:
-            print_progress_bar(0, total_files_to_analyze, prefix='    Analyzing image dimensions:', suffix='Done', length=40)
+    if total_files_to_analyze > 0:
+        print_progress_bar(0, total_files_to_analyze, prefix='    Analyzing image dimensions:', suffix='Done', length=40)
     
     for i, filepath in enumerate(sorted_image_filepaths):
         try:
@@ -271,7 +271,7 @@ def merge_to_long_image(source_project_dir, output_long_image_dir, long_image_fi
         return None
 
 
-# --- V2 分割相关函数 ---
+# --- V2 Split-related Functions ---
 
 
 def are_colors_close(color1, color2, tolerance):
@@ -355,7 +355,7 @@ def split_long_image_v2(long_image_path, output_split_dir, min_solid_band_height
                                 split_image_paths.append(output_filepath)
                                 part_index += 1
                             except Exception as e_save:
-                                print(f"      保存分割片段 '{output_filename}' 失败: {e_save}")
+                                print(f"      Failed to save split segment '{output_filename}': {e_save}")
                         current_segment_start_y = cut_point_y
                 solid_band_after_last_content_start_y = -1
             else:  # This is a "solid" row
@@ -371,7 +371,7 @@ def split_long_image_v2(long_image_path, output_split_dir, min_solid_band_height
                     segment.save(output_filepath, "PNG")
                     split_image_paths.append(output_filepath)
                 except Exception as e_save:
-                    print(f"      保存最后一个分割片段 '{output_filename}' 失败: {e_save}")
+                    print(f"      Failed to save the last split segment '{output_filename}': {e_save}")
 
         if not split_image_paths and img_height > 0:
             print(f"    V2 method failed to split '{os.path.basename(long_image_path)}' based on the specified solid bands.")
@@ -385,7 +385,7 @@ def split_long_image_v2(long_image_path, output_split_dir, min_solid_band_height
     return natsort.natsorted(split_image_paths)
 
 
-# --- V4 分割相关函数 ---
+# --- V4 Split-related Functions ---
 def get_dominant_color_numpy(pixels_quantized):
     """[V4 performance core] Use pure NumPy to find the dominant color from quantized pixel blocks."""
     if pixels_quantized.size == 0:
@@ -510,7 +510,7 @@ def split_long_image_v4(long_image_path, output_split_dir, quantization_factor, 
         return []
 
 
-# --- 融合分割函数 ---
+# --- Hybrid Split Functions ---
 def split_long_image_hybrid(long_image_path, output_split_dir):
     """Hybrid split method: Try V2 first; if PDF creation fails, automatically switch to V4."""
     print(f"\n  --- Step 2 (V5 - Intelligent hybrid split): Split long image '{os.path.basename(long_image_path)}' ---")
@@ -638,9 +638,9 @@ def split_long_image_hybrid_with_pdf_fallback(long_image_path, output_split_dir,
                 if os.path.exists(file_path):
                     try:
                         os.remove(file_path)
-                        print(f"      已删除 V2 分割文件: {os.path.basename(file_path)}")
+                        print(f"      Deleted V2 split file: {os.path.basename(file_path)}")
                     except Exception as e:
-                        print(f"      删除失败 {os.path.basename(file_path)}: {e}")
+                        print(f"      Delete failed for {os.path.basename(file_path)}: {e}")
     else:
         print("    ⚠️  V2 method split failed; switching to V4...")
     
@@ -953,7 +953,7 @@ if __name__ == "__main__":
             print(f"  ❌ Project folder '{subdir_name}' did not successfully generate a PDF; intermediate files retained for inspection.")
             failed_subdirs_list.append(subdir_name)
 
-        print(f"{'='*15} '{subdir_name}' 处理完毕 {'='*15}")
+        print(f"{'='*15} Project '{subdir_name}' processing complete {'='*15}")
         print_progress_bar(i + 1, len(sorted_subdirectories), prefix="Total progress:", suffix='Done', length=40)
 
     print("\n" + "=" * 80 + "\n[Task Summary Report]\n" + "-" * 80)

@@ -14,8 +14,8 @@ NAMESPACES = {
 ET.register_namespace('', NAMESPACES['opf'])
 
 
-def print_progress_bar(iteration, total, prefix='进度', suffix='完成', length=50, fill='█'):
-    """打印进度条的辅助函数。"""
+def print_progress_bar(iteration, total, prefix='Progress', suffix='Done', length=50, fill='█'):
+    """Helper function to print a progress bar."""
     percent = ("{0:.1f}").format(100 * (iteration / float(total)))
     filled_length = int(length * iteration // total)
     bar = fill * filled_length + '-' * (length - filled_length)
@@ -24,194 +24,194 @@ def print_progress_bar(iteration, total, prefix='进度', suffix='完成', lengt
     if iteration == total:
         sys.stdout.write('\n')
 
-# 阅读器类型配置
+# Reader type configuration
 READER_TYPES = {
     "1": {
-        "name": "静读天下",
-        "description": "专为静读天下阅读器优化的样式",
+        "name": "Moon+ Reader",
+        "description": "Styles optimized for Moon+ Reader",
         "css_dir": "Moonreader",
         "preview_file": "moonreader_preview.html"
     },
     "2": {
-        "name": "其他阅读器",
-        "description": "适用于大多数EPUB阅读器的通用样式",
+        "name": "Other Readers",
+        "description": "General styles suitable for most EPUB readers",
         "css_dir": "basic",
         "preview_file": "epub_styles_preview.html"
     }
 }
 
-# 静读天下样式配置
+# Moon+ Reader style options
 MOONREADER_STYLE_OPTIONS = {
     "1": {
-        "name": "灰度层次样式",
-        "description": "灰度配色方案，层次分明，适合专业文档",
+        "name": "Grayscale hierarchy",
+        "description": "Grayscale palette with clear hierarchy; suited for professional documents",
         "file": "moonreader_epub_style_grayscale.css"
     },
     "2": {
-        "name": "线条层次样式",
-        "description": "线条层次设计，清晰结构，适合教育类书籍",
+        "name": "Line hierarchy",
+        "description": "Line-hierarchy design with clear structure; suited for educational books",
         "file": "moonreader_epub_style_line_hierarchy.css"
     },
     "3": {
-        "name": "线性极简样式",
-        "description": "线性极简设计，现代风格，适合商务文档",
+        "name": "Linear minimal",
+        "description": "Linear minimalist design in modern style; suited for business documents",
         "file": "moonreader_epub_style_linear.css"
     },
     "4": {
-        "name": "简约网格样式",
-        "description": "网格布局设计，简约风格，适合技术手册",
+        "name": "Minimal grid",
+        "description": "Grid layout in minimal style; suited for technical manuals",
         "file": "moonreader_epub_style_minimal_grid.css"
     },
     "5": {
-        "name": "极简线性样式",
-        "description": "线性设计，极简风格，适合技术文档",
+        "name": "Minimal linear",
+        "description": "Linear design, minimalist style; suited for technical documents",
         "file": "moonreader_epub_style_minimal_linear.css"
     },
     "6": {
-        "name": "现代极简样式",
-        "description": "现代极简设计，简洁大方，适合现代文学",
+        "name": "Modern minimal",
+        "description": "Modern minimalist design, clean and tasteful; suited for modern literature",
         "file": "moonreader_epub_style_minimal_modern.css"
     },
     "7": {
-        "name": "简洁现代样式",
-        "description": "极简设计，适合商务文档和学术论文",
+        "name": "Clean modern",
+        "description": "Minimal design; suited for business docs and academic papers",
         "file": "moonreader_epub_style_minimal.css"
     },
     "8": {
-        "name": "现代清新样式",
-        "description": "左对齐标题，现代感强，适合技术文档和现代文学",
+        "name": "Modern fresh",
+        "description": "Left-aligned titles, modern feel; suited for technical docs and modern literature",
         "file": "moonreader_epub_style_modern.css"
     },
     "9": {
-        "name": "单色极简样式",
-        "description": "单色设计，极简风格，适合现代阅读体验",
+        "name": "Monochrome minimal",
+        "description": "Monochrome minimalist style; suited for modern reading",
         "file": "moonreader_epub_style_monochrome.css"
     },
     "10": {
-        "name": "柔和圆润样式",
-        "description": "圆润设计，柔和视觉效果，适合休闲阅读",
+        "name": "Soft rounded",
+        "description": "Rounded design with a soft visual; suited for casual reading",
         "file": "moonreader_epub_style_soft.css"
     },
     "11": {
-        "name": "结构化简约样式",
-        "description": "结构化设计，简约风格，适合学术研究",
+        "name": "Structured minimal",
+        "description": "Structured design in minimalist style; suited for academic research",
         "file": "moonreader_epub_style_structured_minimal.css"
     },
     "12": {
-        "name": "温馨护眼样式",
-        "description": "温暖色调，舒适行距，减少眼部疲劳，适合长时间阅读",
+        "name": "Warm eye-care",
+        "description": "Warm tones with comfortable line spacing to reduce eye strain; suited for long reading",
         "file": "moonreader_epub_style_warm.css"
     }
 }
 
-# 通用阅读器样式配置
+# General reader style options
 BASIC_STYLE_OPTIONS = {
     "1": {
-        "name": "经典简约样式",
-        "description": "标准电子书排版，适合大多数小说和文学作品",
+        "name": "Classic minimal",
+        "description": "Standard ebook typesetting; suited for most novels and literature",
         "file": "epub_style_classic.css"
     },
     "2": {
-        "name": "温馨护眼样式",
-        "description": "温暖色调，舒适行距，减少眼部疲劳，适合长时间阅读",
+        "name": "Warm eye-care",
+        "description": "Warm tones with comfortable spacing; suited for long reading",
         "file": "epub_style_warm.css"
     },
     "3": {
-        "name": "现代清新样式",
-        "description": "左对齐标题，现代感强，适合技术文档和现代文学",
+        "name": "Modern fresh",
+        "description": "Left-aligned titles with modern feel; suited for technical docs and modern literature",
         "file": "epub_style_modern.css"
     },
     "4": {
-        "name": "优雅古典样式",
-        "description": "古典风格，适合古典文学、诗词和传统文化类书籍",
+        "name": "Elegant vintage",
+        "description": "Classic style; suited for classical literature, poetry, and traditional culture",
         "file": "epub_style_elegant.css"
     },
     "5": {
-        "name": "简洁现代样式",
-        "description": "极简设计，适合商务文档和学术论文",
+        "name": "Clean modern",
+        "description": "Minimal design; suited for business docs and academic papers",
         "file": "epub_style_minimal.css"
     },
     "6": {
-        "name": "灰度层次样式",
-        "description": "灰度配色方案，层次分明，适合专业文档",
+        "name": "Grayscale hierarchy",
+        "description": "Grayscale palette with clear hierarchy; suited for professional documents",
         "file": "epub_style_grayscale.css"
     },
     "7": {
-        "name": "单色极简样式",
-        "description": "单色设计，极简风格，适合现代阅读体验",
+        "name": "Monochrome minimal",
+        "description": "Monochrome minimalist style; suited for modern reading",
         "file": "epub_style_monochrome.css"
     },
     "8": {
-        "name": "护眼低对比样式",
-        "description": "低对比度设计，保护视力，适合长时间阅读",
+        "name": "Eye-care low contrast",
+        "description": "Low-contrast design to protect vision; suited for long reading",
         "file": "epub_style_eyecare.css"
     },
     "9": {
-        "name": "高对比度样式",
-        "description": "高对比度设计，清晰易读，适合视力不佳的读者",
+        "name": "High contrast",
+        "description": "High-contrast design for clarity; suited for readers with poor eyesight",
         "file": "epub_style_contrast.css"
     },
     "10": {
-        "name": "柔和圆润样式",
-        "description": "圆润设计，柔和视觉效果，适合休闲阅读",
+        "name": "Soft rounded",
+        "description": "Rounded design with a soft visual; suited for casual reading",
         "file": "epub_style_soft.css"
     },
     "11": {
-        "name": "现代极简样式",
-        "description": "现代极简设计，简洁大方，适合现代文学",
+        "name": "Modern minimal",
+        "description": "Modern minimalist design, clean and tasteful; suited for modern literature",
         "file": "epub_style_minimal_modern.css"
     },
     "12": {
-        "name": "黑白简约样式",
-        "description": "黑白配色，简约设计，适合经典文学作品",
+        "name": "Black & white minimal",
+        "description": "Black-and-white palette with minimal design; suited for classic literature",
         "file": "epub_style_clean.css"
     },
     "13": {
-        "name": "几何极简样式",
-        "description": "几何元素，极简设计，适合现代艺术类书籍",
+        "name": "Geometric minimal",
+        "description": "Geometric elements with minimal design; suited for modern art books",
         "file": "epub_style_geometric.css"
     },
     "14": {
-        "name": "极简线性样式",
-        "description": "线性设计，极简风格，适合技术文档",
+        "name": "Minimal linear",
+        "description": "Linear design in minimalist style; suited for technical documents",
         "file": "epub_style_minimal_linear.css"
     },
     "15": {
-        "name": "简约网格样式",
-        "description": "网格布局设计，简约风格，适合技术手册",
+        "name": "Minimal grid",
+        "description": "Grid layout in minimal style; suited for technical manuals",
         "file": "epub_style_minimal_grid.css"
     },
     "16": {
-        "name": "几何框架样式",
-        "description": "几何框架设计，现代感强，适合设计类书籍",
+        "name": "Geometric frame",
+        "description": "Geometric frame design with strong modern feel; suited for design books",
         "file": "epub_style_geometric_frame.css"
     },
     "17": {
-        "name": "奇幻冒险样式",
-        "description": "充满想象力的设计，适合奇幻小说和冒险故事",
+        "name": "Fantasy adventure",
+        "description": "Imaginative design; suited for fantasy novels and adventure stories",
         "file": "epub_style_fantasy.css"
     },
     "18": {
-        "name": "线条层次样式",
-        "description": "线条层次设计，清晰结构，适合教育类书籍",
+        "name": "Line hierarchy",
+        "description": "Line-hierarchy design with clear structure; suited for educational books",
         "file": "epub_style_line_hierarchy.css"
     },
     "19": {
-        "name": "线性极简样式",
-        "description": "线性极简设计，现代风格，适合商务文档",
+        "name": "Linear minimal",
+        "description": "Linear minimalist design in modern style; suited for business documents",
         "file": "epub_style_linear.css"
     },
     "20": {
-        "name": "结构化简约样式",
-        "description": "结构化设计，简约风格，适合学术研究",
+        "name": "Structured minimal",
+        "description": "Structured design in minimalist style; suited for academic research",
         "file": "epub_style_structured_minimal.css"
     }
 }
 
 def select_reader_type():
-    """选择阅读器类型"""
+    """Select reader type"""
     print("\n" + "="*60)
-    print("📱 选择阅读器类型")
+    print("📱 Select Reader Type")
     print("="*60)
     
     # 显示阅读器类型选项
@@ -222,16 +222,16 @@ def select_reader_type():
     
     while True:
         try:
-            choice = input("请选择阅读器类型 (默认选择1): ").strip()
+            choice = input("Select reader type (default is 1): ").strip()
             if not choice:
-                choice = "1"  # 默认选择静读天下
+                choice = "1"  # Default: Moon+ Reader
             
             if choice in READER_TYPES:
                 return choice, READER_TYPES[choice]
             else:
-                print("❌ 无效的选择，请重新选择")
+                print("❌ Invalid choice, please select again")
         except (ValueError, KeyboardInterrupt):
-            print("\n❌ 输入无效，请重新选择")
+            print("\n❌ Invalid input, please select again")
 
 def select_epub_style(reader_type_info):
     """让用户选择EPUB样式"""
@@ -502,7 +502,7 @@ def create_epub(txt_path, final_toc, css_content, cover_path, l1_regex, l2_regex
     new_title = input(f"请输入电子书标题 (默认为: '{default_book_name}'): ").strip()
     book_name = new_title if new_title else default_book_name
     print(f"[LOG] 电子书标题将设为: '{book_name}'")
-    print("\n--- 步骤 4: 正在生成 EPUB 文件... ---")
+    print("\n--- Step 4: Generating EPUB file... ---")
     
     # 确定CSS文件名
     if selected_style_key == 'custom':

@@ -50,7 +50,7 @@ def process_epub_file(epub_path, num_splits, output_dir):
     try:
         # 读取原始 EPUB 文件
         original_book = epub.read_epub(epub_path)
-        print(f"\n[INFO] 正在处理: {os.path.basename(epub_path)}")
+    print(f"\n[INFO] Processing: {os.path.basename(epub_path)}")
     except Exception as e:
         print(f"[ERROR] 无法读取文件: {os.path.basename(epub_path)}. 错误: {e}")
         return
@@ -58,18 +58,18 @@ def process_epub_file(epub_path, num_splits, output_dir):
     # 获取所有文档项目（实际内容文件）
     all_document_items = get_all_document_items(original_book)
     total_documents = len(all_document_items)
-    print(f"[INFO] 文件共有 {total_documents} 个内容文档.")
+    print(f"[INFO] The file contains {total_documents} document items.")
     
     # 同时获取导航点用于TOC构建
     all_chapters = get_nav_points(original_book.toc)
-    print(f"[INFO] 文件共有 {len(all_chapters)} 个导航章节.")
+    print(f"[INFO] The file contains {len(all_chapters)} navigation chapters.")
 
     # 检查分割数是否有效
     if num_splits > total_documents:
-        print(f"[ERROR] 分割数 ({num_splits}) 大于总文档数 ({total_documents}). 跳过此文件.")
+        print(f"[ERROR] Split count ({num_splits}) is greater than total documents ({total_documents}). Skipping this file.")
         return
     if num_splits <= 0:
-        print(f"[ERROR] 分割数必须大于 0. 跳过此文件.")
+        print(f"[ERROR] Split count must be greater than 0. Skipping this file.")
         return
 
     # 计算每个分割文件应包含的文档数
@@ -80,12 +80,12 @@ def process_epub_file(epub_path, num_splits, output_dir):
     
     # 获取所有非文档项目 (如 CSS, 图像, 字体等)
     non_document_items = [item for item in original_book.get_items() if item.get_type() != ITEM_DOCUMENT]
-    print(f"[INFO] 找到 {len(non_document_items)} 个非文档项目（CSS、图像等）.")
+    print(f"[INFO] Found {len(non_document_items)} non-document items (CSS, images, etc.).")
 
     current_document_index = 0
     for i, size in enumerate(split_sizes):
         part_num = i + 1
-        print(f"\n[INFO] 正在创建第 {part_num} 部分，包含 {size} 个文档...")
+        print(f"\n[INFO] Creating part {part_num}, contains {size} document(s)...")
         
         # 创建一个新的 EPUB book 对象
         new_book = epub.EpubBook()
@@ -104,21 +104,21 @@ def process_epub_file(epub_path, num_splits, output_dir):
             new_book.set_identifier(f"unknown-id-{base_name}-part{part_num}")
             new_book.set_title(f"{base_name} (Part {part_num}/{num_splits})")
             new_book.set_language('en')
-            print(f"  [WARNING] 原始文件缺少部分元数据, 已使用默认值.")
+            print(f"  [WARNING] Original file missing some metadata; defaults used.")
 
         # --- 添加文档内容 ---
         start_index = current_document_index
         end_index = current_document_index + size
         documents_for_this_part = all_document_items[start_index:end_index]
         
-        print(f"  [INFO] 添加文档 {start_index+1} 到 {end_index}...")
+        print(f"  [INFO] Adding documents {start_index+1} to {end_index}...")
         
         # 添加所有文档项目到新书中
         new_book.spine = []
         for doc_item in documents_for_this_part:
             new_book.add_item(doc_item)
             new_book.spine.append(doc_item)
-            print(f"    -> 已添加文档: {doc_item.get_name()}")
+            print(f"    -> Added document: {doc_item.get_name()}")
 
         # 添加所有非文档项目（CSS、图像等）
         for item in non_document_items:
@@ -145,9 +145,9 @@ def process_epub_file(epub_path, num_splits, output_dir):
 
         try:
             epub.write_epub(output_path, new_book, {})
-            print(f"  -> 已创建: {new_filename} (包含 {len(documents_for_this_part)} 个文档)")
+            print(f"  -> Created: {new_filename} (contains {len(documents_for_this_part)} document(s))")
         except Exception as e:
-            print(f"  -> [ERROR] 创建文件失败: {new_filename}. 错误: {e}")
+            print(f"  -> [ERROR] Failed to create file: {new_filename}. Error: {e}")
 
         current_document_index = end_index
 
@@ -172,29 +172,29 @@ def main():
     default_dir = load_default_path_from_settings()
     
     # --- 获取用户输入 ---
-    input_dir = input(f"请输入 EPUB 文件所在的目录 (默认为: {default_dir}): ").strip()
+    input_dir = input(f"Enter the directory containing EPUB files (default: {default_dir}): ").strip()
     if not input_dir:
         input_dir = default_dir
 
     if not os.path.isdir(input_dir):
-        print(f"[FATAL] 错误: 目录 '{input_dir}' 不存在. 程序退出.")
+        print(f"[FATAL] Error: Directory '{input_dir}' does not exist. Exiting.")
         sys.exit(1)
 
     while True:
         try:
-            num_splits_str = input("请输入您想将每本书分割成的文件数量: ").strip()
+            num_splits_str = input("Enter the number of parts to split each book into: ").strip()
             num_splits = int(num_splits_str)
             if num_splits > 0:
                 break
             else:
-                print("[ERROR] 分割数量必须是大于0的整数, 请重新输入.")
+                print("[ERROR] Split count must be a positive integer; please re-enter.")
         except ValueError:
-            print("[ERROR] 无效输入. 请输入一个数字.")
+            print("[ERROR] Invalid input. Please enter a number.")
 
     # --- 创建输出目录 ---
     output_dir = os.path.join(input_dir, OUTPUT_DIR_NAME)
     os.makedirs(output_dir, exist_ok=True)
-    print(f"\n[INFO] 分割后的文件将保存在: {output_dir}")
+    print(f"\n[INFO] Split files will be saved to: {output_dir}")
 
     # --- 遍历并处理目录中的所有 EPUB 文件 ---
     for filename in os.listdir(input_dir):
@@ -202,7 +202,7 @@ def main():
             epub_path = os.path.join(input_dir, filename)
             process_epub_file(epub_path, num_splits, output_dir)
             
-    print("\n[SUCCESS] 所有文件处理完毕!")
+    print("\n[SUCCESS] All files processed!")
 
 if __name__ == '__main__':
     main()
