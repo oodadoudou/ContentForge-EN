@@ -7,23 +7,23 @@ from bs4 import BeautifulSoup
 from ebooklib import epub
 
 def load_default_path_from_settings():
-    """从共享设置文件中读取默认工作目录。"""
+    """Read default working directory from the shared settings file."""
     try:
-        # 向上导航两级以到达项目根目录
+        # Navigate two levels up to reach the project root
         project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         settings_path = os.path.join(project_root, 'shared_assets', 'settings.json')
         with open(settings_path, 'r', encoding='utf-8') as f:
             settings = json.load(f)
-        # 如果 "default_work_dir" 存在且不为空，则返回它
+        # If "default_work_dir" exists and is non-empty, return it
         default_dir = settings.get("default_work_dir")
         return default_dir if default_dir else "."
     except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
-        print(f"警告：读取 settings.json 失败 ({e})，将使用用户主目录下的 'Downloads' 作为备用路径。")
-        # 提供一个通用的备用路径
+        print(f"Warning: Failed to read settings.json ({e}); using user's 'Downloads' as fallback path.")
+        # Provide a general fallback path
         return os.path.join(os.path.expanduser("~"), "Downloads")
 
 def get_unique_css_files(unzip_dir):
-    """获取解压目录中所有唯一的CSS文件。"""
+    """Get all unique CSS files in the unpacked directory."""
     css_files = {}
     for root, _, files in os.walk(unzip_dir):
         for file in files:
@@ -36,7 +36,7 @@ def get_unique_css_files(unzip_dir):
     return list(css_files.values())
 
 def fix_epub_css(epub_path, output_dir):
-    """修复单个EPUB文件中的CSS链接。"""
+    """Fix CSS links in a single EPUB file."""
     temp_dir = os.path.join(output_dir, 'temp_epub_unpack')
     if os.path.exists(temp_dir):
         shutil.rmtree(temp_dir)
@@ -48,7 +48,7 @@ def fix_epub_css(epub_path, output_dir):
 
         unique_css_paths = get_unique_css_files(temp_dir)
         if not unique_css_paths:
-            print(f"  - 在 {os.path.basename(epub_path)} 中未找到CSS文件，跳过。")
+            print(f"  - No CSS files found in {os.path.basename(epub_path)}; skipping.")
             return "skipped", "No CSS files found"
 
         modified = False
@@ -59,19 +59,19 @@ def fix_epub_css(epub_path, output_dir):
                     with open(file_path, 'r', encoding='utf-8') as f:
                         soup = BeautifulSoup(f, 'html.parser')
 
-                    # 检查是否没有样式表链接
+                    # Check whether there are no stylesheet links
                     if not (soup.head and soup.head.find_all('link', rel='stylesheet')):
                         head = soup.head
-                        # 如果没有 <head> 标签，则创建一个
+                        # If there is no <head> tag, create one
                         if not head:
                             head = soup.new_tag('head')
                             html_tag = soup.find('html')
                             if html_tag:
                                 html_tag.insert(0, head)
                             else:
-                                # 如果没有<html>标签，这是一个格式不正确的文件，但我们仍尝试处理
+                                # If there is no <html> tag, the file is malformed; still attempt a fix
                                 soup.insert(0, head)
-                                print(f"  - 警告: 文件 {file} 缺少 <html> 标签，已尝试创建 <head> 标签。")
+                                print(f"  - Warning: File {file} lacks an <html> tag; attempted to create <head>.")
 
                         for css_path in unique_css_paths:
                             relative_css_path = os.path.relpath(os.path.join(temp_dir, css_path), root).replace('\\', '/')
@@ -97,12 +97,12 @@ def fix_epub_css(epub_path, output_dir):
             shutil.rmtree(temp_dir)
 
 def main():
-    """主函数，处理所有EPUB文件。"""
+    """Main function: process all EPUB files."""
     default_path = load_default_path_from_settings()
-    input_dir = input(f"请输入包含EPUB文件的文件夹路径（默认为：{default_path}）：") or default_path
+    input_dir = input(f"Please enter the folder path containing EPUB files (default: {default_path}): ") or default_path
     
     if not os.path.isdir(input_dir):
-        print(f"错误：路径 '{input_dir}' 不是一个有效的文件夹。")
+        print(f"Error: Path '{input_dir}' is not a valid folder.")
         return
 
     output_dir = os.path.join(input_dir, 'fixed_epubs')
@@ -112,47 +112,47 @@ def main():
     epub_files = [f for f in os.listdir(input_dir) if f.lower().endswith('.epub')]
     
     if not epub_files:
-        print("在指定目录中未找到EPUB文件。")
+        print("No EPUB files found in the specified directory.")
         return
 
     fixed_files = []
     skipped_files = []
     failed_files = []
 
-    print(f"\n开始处理 {len(epub_files)} 个EPUB文件...")
+    print(f"\nStarting to process {len(epub_files)} EPUB file(s)...")
     for filename in epub_files:
         epub_path = os.path.join(input_dir, filename)
-        print(f"处理中: {filename}")
+        print(f"Processing: {filename}")
         status, reason = fix_epub_css(epub_path, output_dir)
         
         if status == "fixed":
             fixed_files.append(filename)
-            print(f"  - 状态：已修复")
+            print(f"  - Status: fixed")
         elif status == "skipped":
-            skipped_files.append(f"{filename} (原因: {reason})")
-            print(f"  - 状态：已跳过")
+            skipped_files.append(f"{filename} (Reason: {reason})")
+            print(f"  - Status: skipped")
         elif status == "failed":
-            failed_files.append(f"{filename} (原因: {reason})")
-            print(f"  - 状态：失败")
+            failed_files.append(f"{filename} (Reason: {reason})")
+            print(f"  - Status: failed")
 
-    print("\n--- 处理报告 ---")
-    print(f"总文件数: {len(epub_files)}")
-    print(f"成功修复数: {len(fixed_files)}")
-    print(f"跳过文件数: {len(skipped_files)}")
-    print(f"失败文件数: {len(failed_files)}")
+    print("\n--- Processing Report ---")
+    print(f"Total files: {len(epub_files)}")
+    print(f"Successfully fixed: {len(fixed_files)}")
+    print(f"Skipped: {len(skipped_files)}")
+    print(f"Failed: {len(failed_files)}")
 
     if fixed_files:
-        print("\n已修复文件:")
+        print("\nFixed files:")
         for f in fixed_files:
             print(f"- {f}")
     
     if skipped_files:
-        print("\n已跳过文件:")
+        print("\nSkipped files:")
         for f in skipped_files:
             print(f"- {f}")
 
     if failed_files:
-        print("\n失败文件:")
+        print("\nFailed files:")
         for f in failed_files:
             print(f"- {f}")
 

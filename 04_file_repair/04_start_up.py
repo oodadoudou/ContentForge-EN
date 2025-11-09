@@ -1,34 +1,34 @@
 import os
 import sys
 
-# 将项目根目录添加到Python搜索路径中，以便能导入共享工具
+# Add project root to Python search path to import shared tools
 # This assumes the script is in a subdirectory of the project root
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from shared_utils import utils
 
 def menu_file_repair_and_utilities():
-    """模块四: 文件修复与工具的独立菜单"""
+    """Module 4: Standalone menu for File Repair & Utilities."""
     module_path_repair = '04_file_repair'
     module_path_utils = '06_utilities'
     
-    # 加载全局设置
+    # Load global settings
     settings = utils.load_settings()
     
     while True:
-        utils.print_header("4. 文件修复与工具 (解决常见问题)")
-        print("--- EPUB 修复 ---")
-        print(" 1. 自动修复竖排版并转为简体中文")
-        print(" 2. 修复 Kindle 等设备不显示封面的问题")
-        print(" 3. 修复 EPUB 缺失的 CSS 样式链接")
-        print("\n--- TXT 修复 ---")
-        print(" 4. TXT 文件格式化 (添加段落间距)")
-        print(" 5. 修复 TXT 文件的编码问题 (解决乱码)")
-        print("\n--- 辅助工具 ---")
-        print(" 6. 在浏览器中批量打开 Bomtoon 链接")
+        utils.print_header("4. File Repair & Utilities (Fix common issues)")
+        print("--- EPUB Repair ---")
+        print(" 1. Auto-fix vertical layout and convert to Simplified Chinese")
+        print(" 2. Fix missing cover display on devices like Kindle")
+        print(" 3. Repair missing CSS style links in EPUB")
+        print("\n--- TXT Repair ---")
+        print(" 4. TXT formatting (add paragraph spacing)")
+        print(" 5. Fix TXT encoding issues (resolve garbled text)")
+        print("\n--- Utilities ---")
+        print(" 6. Batch open Bomtoon links in browser")
         print("----------")
-        print(" 8. 查看本模块用法说明 (README)")
-        print(" 0. 返回主菜单")
-        choice = utils.get_input("请选择")
+        print(" 8. View module usage (README)")
+        print(" 0. Return to main menu")
+        choice = utils.get_input("Please choose")
 
         if choice == '1':
             utils.run_script("epub_reformat_and_convert_v2.py", cwd=module_path_repair)
@@ -45,13 +45,13 @@ def menu_file_repair_and_utilities():
         elif choice == '8':
             utils.show_usage(module_path_repair)
         elif choice == '0':
-            # 返回主菜单（在子脚本中即为退出）
+            # Return to main menu (exit in sub-script)
             break
 
 if __name__ == "__main__":
     try:
         menu_file_repair_and_utilities()
     except KeyboardInterrupt:
-        # 当用户在子菜单中按 Ctrl+C 时，优雅退出
-        print("\n\n操作被用户中断。")
+        # Graceful exit when user presses Ctrl+C in submenu
+        print("\n\nOperation interrupted by user.")
         sys.exit(0)

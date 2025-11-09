@@ -7,7 +7,7 @@ from xml.etree import ElementTree as ET
 import json
 
 def find_opf_file(unzip_dir):
-    """在解压目录中找到 .opf 文件。"""
+    """Find the .opf file in the unpacked directory."""
     for root, _, files in os.walk(unzip_dir):
         for file in files:
             if file.endswith('.opf'):
@@ -16,15 +16,15 @@ def find_opf_file(unzip_dir):
 
 def get_cover_info(opf_path):
     """
-    从 .opf 文件中解析出封面图片和封面页面的信息。
-    返回一个包含封面图片路径和封面HTML文件路径的字典。
+    Parse cover image and cover page info from the .opf file.
+    Returns a dict with cover image path and cover HTML file path.
     """
     if not opf_path:
         return None
 
     cover_info = {'image_path': None, 'html_path': None}
     try:
-        # 注册命名空间以便正确解析
+        # Register namespaces to parse correctly
         namespaces = {
             'opf': 'http://www.idpf.org/2007/opf',
             'dc': 'http://purl.org/dc/elements/1.1/'
@@ -35,14 +35,14 @@ def get_cover_info(opf_path):
         tree = ET.parse(opf_path)
         root = tree.getroot()
         
-        # --- 步骤 1: 找到封面图片的ID ---
+        # --- Step 1: Find the cover image ID ---
         cover_id = None
-        # 首先尝试EPUB3的<meta>标签
+        # First try EPUB3 <meta> tag
         meta_cover = root.find('.//opf:meta[@name="cover"]', namespaces)
         if meta_cover is not None:
             cover_id = meta_cover.get('content')
         
-        # --- 步骤 2: 从manifest中根据ID找到图片路径 ---
+        # --- Step 2: Find image path by ID from manifest ---
         manifest = root.find('opf:manifest', namespaces)
         if manifest is None: return None
         
@@ -51,18 +51,18 @@ def get_cover_info(opf_path):
             if cover_item is not None:
                 cover_info['image_path'] = cover_item.get('href')
 
-        # 如果没有找到，则尝试寻找带有 cover-image 属性的 item
+        # If not found, try to find item with cover-image property
         if not cover_info['image_path']:
             cover_item = manifest.find(".//*[@properties='cover-image']", namespaces)
             if cover_item is not None:
                 cover_info['image_path'] = cover_item.get('href')
         
         if not cover_info['image_path']:
-             print("  - [警告] 未在 .opf 文件中明确找到封面图片定义。")
+             print("  - [Warning] No explicit cover image definition found in .opf.")
              return None
 
-        # --- 步骤 3: 找到封面XHTML文件 ---
-        # 寻找引用了封面图片的 XHTML 文件
+        # --- Step 3: Find the cover XHTML file ---
+        # Find XHTML file that references the cover image
         for item in manifest.findall('.//opf:item', namespaces):
             href = item.get('href', '')
             if 'cover' in href.lower() and href.endswith(('.xhtml', '.html')):
@@ -70,32 +70,32 @@ def get_cover_info(opf_path):
                 break
         
         if not cover_info['html_path']:
-            print("  - [警告] 未找到明确的封面HTML文件，将创建一个新的。")
-            cover_info['html_path'] = 'cover.xhtml' # 如果找不到，就创建一个
+            print("  - [Warning] No explicit cover HTML file found; will create a new one.")
+            cover_info['html_path'] = 'cover.xhtml' # Create one if not found
 
         return cover_info
     except Exception as e:
-        print(f"  - [错误] 解析OPF文件时出错: {e}")
+        print(f"  - [Error] Failed to parse OPF file: {e}")
         return None
 
 def create_and_write_cover_html(unzip_dir, cover_info):
     """
-    创建或覆盖封面HTML文件，写入标准化的内容。
+    Create or overwrite the cover HTML file with a standardized template.
     """
-    # 计算封面图片相对于封面HTML的路径
+    # Compute cover image path relative to cover HTML
     html_full_path = os.path.join(os.path.dirname(os.path.join(unzip_dir, 'DUMMY')), cover_info['html_path'])
     image_full_path = os.path.join(os.path.dirname(os.path.join(unzip_dir, 'DUMMY')), cover_info['image_path'])
     
-    # 获取两个文件的目录路径
+    # Get directory paths of both files
     html_dir = os.path.dirname(html_full_path)
     image_dir = os.path.dirname(image_full_path)
     
-    # 计算相对路径
+    # Compute relative path
     relative_image_path = os.path.relpath(image_dir, html_dir)
-    # 组合成最终的src路径
+    # Compose final src path
     final_image_src = os.path.join(relative_image_path, os.path.basename(image_full_path)).replace('\\', '/')
     
-    # 兼容性最好的封面HTML模板
+    # Highly compatible cover HTML template
     cover_html_template = f"""<?xml version='1.0' encoding='utf-8'?>
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -114,23 +114,23 @@ def create_and_write_cover_html(unzip_dir, cover_info):
 </body>
 </html>"""
 
-    # 找到OPF文件所在的目录，通常是内容文件的根目录
+    # Find the directory containing the OPF file (content root)
     opf_path = find_opf_file(unzip_dir)
     content_root = os.path.dirname(opf_path)
     
-    # 写入新的封面HTML文件
+    # Write the new cover HTML file
     target_html_path = os.path.join(content_root, cover_info['html_path'])
     os.makedirs(os.path.dirname(target_html_path), exist_ok=True)
     with open(target_html_path, 'w', encoding='utf-8') as f:
         f.write(cover_html_template)
-    print(f"  - [修复] 已生成标准化封面文件: {cover_info['html_path']}")
+    print(f"  - [Fixed] Generated standardized cover file: {cover_info['html_path']}")
 
 
 def fix_cover(epub_path, output_dir):
     """
-    修复单个EPUB文件的封面。
+    Repair the cover of a single EPUB file.
     """
-    print(f"\n[处理] {os.path.basename(epub_path)}")
+    print(f"\n[Process] {os.path.basename(epub_path)}")
     with tempfile.TemporaryDirectory() as temp_dir:
         try:
             with zipfile.ZipFile(epub_path, 'r') as zf:
@@ -138,17 +138,17 @@ def fix_cover(epub_path, output_dir):
             
             opf_path = find_opf_file(temp_dir)
             if not opf_path:
-                print("  - [错误] 未找到 .opf 文件，无法处理。")
+                print("  - [Error] .opf file not found; unable to process.")
                 return
 
             cover_info = get_cover_info(opf_path)
             if not cover_info or not cover_info.get('image_path'):
-                print("  - [跳过] 未能识别出封面信息。")
+                print("  - [Skip] Failed to identify cover information.")
                 return
 
             create_and_write_cover_html(os.path.dirname(opf_path), cover_info)
             
-            # 重新打包
+            # Repack
             base_name, _ = os.path.splitext(os.path.basename(epub_path))
             new_epub_path = os.path.join(output_dir, f"{base_name}-cover-fixed.epub")
             
@@ -164,14 +164,14 @@ def fix_cover(epub_path, output_dir):
                             arcname = os.path.relpath(full_path, temp_dir)
                             zf.write(full_path, arcname)
             
-            print(f"  -> [成功] 封面已修复, 新文件保存至: {os.path.basename(output_dir)}")
+            print(f"  -> [Success] Cover fixed; new file saved to: {os.path.basename(output_dir)}")
         
         except Exception as e:
-            print(f"  - [严重错误] 处理过程中发生意外: {e}")
+            print(f"  - [Critical] Unexpected error during processing: {e}")
 
-# --- 新增：函数用于从 settings.json 加载默认路径 ---
+# --- Added: function to load default path from settings.json ---
 def load_default_path_from_settings():
-    """从共享设置文件中读取默认工作目录。"""
+    """Read default working directory from the shared settings file."""
     try:
         project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         settings_path = os.path.join(project_root, 'shared_assets', 'settings.json')
@@ -183,21 +183,21 @@ def load_default_path_from_settings():
         return os.path.join(os.path.expanduser("~"), "Downloads")
 
 def main():
-    """脚本主入口"""
-    # --- 修改：动态加载默认路径 ---
+    """Script entry point"""
+    # --- Change: dynamically load default path ---
     default_path = load_default_path_from_settings()
-    prompt_message = f"请输入需要修复封面的EPUB文件所在目录 (直接按回车将使用: {default_path}): "
+    prompt_message = f"Please enter the directory containing EPUB files to fix covers (Press Enter to use: {default_path}): "
     target_directory = input(prompt_message).strip() or default_path
 
     if not os.path.isdir(target_directory):
-        print(f"错误: 目录 '{target_directory}' 不存在或无效。", file=sys.stderr)
+        print(f"Error: Directory '{target_directory}' does not exist or is invalid.", file=sys.stderr)
         sys.exit(1)
         
     output_dir = os.path.join(target_directory, "processed_files")
     os.makedirs(output_dir, exist_ok=True)
     
-    print(f"[*] 开始扫描目录: {os.path.abspath(target_directory)}")
-    print(f"[*] 所有修复后的文件将被保存到: {os.path.abspath(output_dir)}")
+    print(f"[*] Starting to scan directory: {os.path.abspath(target_directory)}")
+    print(f"[*] All fixed files will be saved to: {os.path.abspath(output_dir)}")
     
     for filename in os.listdir(target_directory):
         if filename.endswith('.epub') and '-cover-fixed' not in filename:
@@ -205,7 +205,7 @@ def main():
             if os.path.isfile(file_path):
                 fix_cover(file_path, output_dir)
     
-    print("\n[*] 所有操作完成。")
+    print("\n[*] All operations completed.")
 
 if __name__ == "__main__":
     main()

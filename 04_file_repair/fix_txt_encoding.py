@@ -4,51 +4,50 @@ import json
 
 def fix_text_file_encoding(file_path, output_path):
     """
-    尝试用多种编码读取一个文本文件，并用 UTF-8 格式重新写入。
+    Try reading a text file using multiple encodings and re-write in UTF-8.
     
-    :param file_path: 原始文件路径。
-    :param output_path: 修复后的文件保存路径。
+    :param file_path: Original file path.
+    :param output_path: Path to save the fixed file.
     """
-    # 常见的中文编码格式列表，按常用顺序列出
+    # Common Chinese encodings listed in typical order
     encodings_to_try = ['utf-8', 'gbk', 'gb18030', 'big5']
     
     content = None
     original_encoding = None
 
-    # 循环尝试用不同的编码格式打开文件
+    # Try opening the file with different encodings
     for encoding in encodings_to_try:
         try:
             with open(file_path, 'r', encoding=encoding) as f:
                 content = f.read()
             original_encoding = encoding
-            print(f"  - [成功] 已使用 '{encoding}' 编码格式成功读取文件。")
-            break  # 只要成功读取一次，就跳出循环
+            print(f"  - [Success] Read file successfully using '{encoding}' encoding.")
+            break  # Exit loop after first successful read
         except UnicodeDecodeError:
-            # 如果解码失败，就继续尝试下一个编码
+            # On decode failure, try next encoding
             continue
         except Exception as e:
-            # 捕获其他可能的异常
-            print(f"  - [警告] 使用 '{encoding}' 编码时发生未知错误: {e}")
+            # Catch other possible exceptions
+            print(f"  - [Warning] Unknown error using '{encoding}' encoding: {e}")
             continue
 
-    # 如果所有编码都尝试失败，则可能不是文本文件或使用了非常见的编码
+    # If all encodings fail, it may not be a text file or uses uncommon encoding
     if content is None:
-        print(f"  - [错误] 无法解码文件: {os.path.basename(file_path)}。该文件可能不是纯文本文件或使用了不支持的编码。")
+        print(f"  - [Error] Unable to decode file: {os.path.basename(file_path)}. It may not be plain text or uses unsupported encoding.")
         return
 
-    # 将读取到的内容以 UTF-8 格式写入新文件
+    # Write content to a new file in UTF-8
     try:
-        # 使用 'utf-8-sig' 会在文件开头写入一个BOM（字节顺序标记），
-        # 这有助于某些Windows程序（如记事本）正确识别UTF-8编码。
+        # Using 'utf-8-sig' writes a BOM to help certain Windows apps (e.g., Notepad) recognize UTF-8.
         with open(output_path, 'w', encoding='utf-8-sig') as f:
             f.write(content)
-        print(f"  -> [完成] 文件已修复并保存至: {os.path.relpath(output_path)}")
+        print(f"  -> [Done] File fixed and saved to: {os.path.relpath(output_path)}")
     except Exception as e:
-        print(f"  - [错误] 写入新文件时失败: {e}")
+        print(f"  - [Error] Failed to write new file: {e}")
 
-# --- 新增：函数用于从 settings.json 加载默认路径 ---
+# --- Added: function to load default path from settings.json ---
 def load_default_path_from_settings():
-    """从共享设置文件中读取默认工作目录。"""
+    """Read default working directory from the shared settings file."""
     try:
         project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         settings_path = os.path.join(project_root, 'shared_assets', 'settings.json')
@@ -61,43 +60,43 @@ def load_default_path_from_settings():
 
 def main():
     """
-    脚本主函数，负责处理用户输入和文件遍历。
+    Script main function: handle user input and file traversal.
     """
-    # --- 修改：动态加载默认路径 ---
+    # --- Change: dynamically load default path ---
     default_path = load_default_path_from_settings()
     
-    # 提示用户输入，并显示默认值
-    prompt_message = f"请输入需要处理的 TXT 文件所在目录 (直接按回车将使用: {default_path}): "
+    # Prompt for input, showing the default value
+    prompt_message = f"Please enter the directory of TXT files to process (Press Enter to use: {default_path}): "
     target_directory = input(prompt_message).strip() or default_path
 
-    # 检查输入路径是否有效
+    # Validate input path
     if not os.path.isdir(target_directory):
-        print(f"错误: 目录 '{target_directory}' 不存在或无效。", file=sys.stderr)
+        print(f"Error: Directory '{target_directory}' does not exist or is invalid.", file=sys.stderr)
         sys.exit(1)
         
-    # 创建统一的输出文件夹
+    # Create unified output folder
     output_dir = os.path.join(target_directory, "processed_files")
     os.makedirs(output_dir, exist_ok=True)
     
-    print(f"\n[*] 开始扫描目录: {os.path.abspath(target_directory)}")
-    print(f"[*] 所有处理后的文件将被保存到: {os.path.abspath(output_dir)}")
+    print(f"\n[*] Starting to scan directory: {os.path.abspath(target_directory)}")
+    print(f"[*] All processed files will be saved to: {os.path.abspath(output_dir)}")
     
-    # 遍历目录（包括所有子目录）
+    # Traverse directory (including subdirectories)
     for root, _, files in os.walk(target_directory):
-        # 跳过我们自己创建的输出目录，避免重复处理
+        # Skip our output directory to avoid re-processing
         if os.path.abspath(root).startswith(os.path.abspath(output_dir)):
             continue
 
         for filename in files:
-            # 只处理 .txt 文件
+            # Only process .txt files
             if filename.endswith('.txt'):
                 file_path = os.path.join(root, filename)
                 output_path = os.path.join(output_dir, filename)
                 
-                print(f"\n[处理文件] {filename}")
+                print(f"\n[Process file] {filename}")
                 fix_text_file_encoding(file_path, output_path)
     
-    print("\n[*] 所有操作完成。")
+    print("\n[*] All operations completed.")
 
 if __name__ == "__main__":
     main()

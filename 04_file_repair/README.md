@@ -1,63 +1,60 @@
 ============================================================
-           模块四: 文件修复与格式化 (04_file_repair)
+           Module 4: File Repair & Formatting (04_file_repair)
 ============================================================
 
-【简介】
-  本模块像一个“文件修理站”，提供一系列工具，专门用于修复和
-  标准化那些格式不规范或有常见问题（如乱码、排版错误、封面
-  不显示等）的 EPUB 和 TXT 文件。
+[Overview]
+  This module is a “file repair station,” providing tools dedicated to
+  fixing and standardizing EPUB and TXT files with common issues such as
+  garbled text, layout problems, or missing covers.
 
 
-【核心脚本】
-  - epub_reformat_and_convert_v2.py (⭐ EPUB综合工具)
+[Core Scripts]
+  - epub_reformat_and_convert_v2.py (⭐ Comprehensive EPUB tool)
   - cover_repair.py
   - fix_txt_encoding.py
   - txt_reformat.py
 
 
-【使用方法】
-  本模块的所有功能都已整合到项目根目录的 main.py 交互式菜单中。
+[How to Use]
+  All features are available from the interactive menu in the project root’s main.py.
 
-  1. 在终端中，进入 ContentForge 根目录，运行 `python main.py`。
-  2. 在主菜单选择 "4. 文件修复与格式化"。
-  3. 根据子菜单的提示选择您需要的功能。
-
-
---------------------- 功能与用法详解 ---------------------
-
-+ + + 1. EPUB 综合修复 + + +
-
-  - 对应脚本: epub_reformat_and_convert_v2.py
-  - 功能: 这是一个智能的、多合一的处理工具。它能【自动检测】
-    EPUB 文件是否存在“竖排版式”或“繁体中文内容”的问题，
-    然后【按需进行】转换，一步解决两大痛点。
-  - 操作流程: 运行此功能后，根据提示输入包含 EPUB 文件的
-    目录路径即可。脚本会自动处理该目录下的所有 EPUB 文件。
+  1. In the terminal, go to the ContentForge root and run `python main.py`.
+  2. In the main menu, select "4. File Repair & Formatting".
+  3. Follow the submenu prompts to choose the function you need.
 
 
-+ + + 2. EPUB 封面修复 + + +
+--------------------- Features and Usage Details ---------------------
 
-  - 对应脚本: cover_repair.py
-  - 功能: 专用于修复在某些阅读器（如 Kindle）上无法正常显示
-    封面的 EPUB 文件。它会生成一个高度兼容的标准化封面页。
-  - 应用场景: 当你的 EPUB 文件在设备上显示为默认图标而不是
-    书籍封面时使用。
-  - 操作流程: 运行后，根据提示输入包含 EPUB 文件的目录路径。
++ + + 1. Comprehensive EPUB Repair + + +
 
-
-+ + + 3. TXT 编码修复 (解决乱码) + + +
-
-  - 对应脚本: fix_txt_encoding.py
-  - 功能: 自动修复因编码错误导致的 TXT 文件【乱码】问题。它会
-    尝试用多种常见编码（UTF-8, GBK, Big5 等）打开文件，
-    成功后统一保存为兼容性最好的 UTF-8 格式。
-  - 操作流程: 运行后，根据提示输入包含 TXT 文件的目录路径。
+  - Script: epub_reformat_and_convert_v2.py
+  - Function: Intelligent all-in-one tool. Automatically detects whether an EPUB
+    has vertical page progression (rtl) and/or Traditional Chinese content, then
+    performs conversions as needed to resolve both in one step.
+  - Workflow: After starting, input the directory containing EPUB files. The script
+    automatically processes all EPUB files in that directory.
 
 
-+ + + 4. TXT 段落修复 (解决错误断行) + + +
++ + + 2. EPUB Cover Repair + + +
 
-  - 对应脚本: txt_reformat_chapter_safe.py
-  - 功能: 专用于修复小说 TXT 中因从 PDF 等格式转换而产生的
-    【错误断行】。它能智能地将被人为切断的句子和段落重新
-    连接起来，同时保护章节标题不被错误合并。
-  - 操作流程: 运行后，根据提示输入包含 TXT 文件的目录路径。
+  - Script: cover_repair.py
+  - Function: Fixes EPUB cover display issues on some readers (e.g., Kindle) by
+    generating a highly compatible standardized cover page.
+  - Use case: When the EPUB shows a default icon instead of the actual book cover.
+  - Workflow: After starting, input the directory containing EPUB files to repair.
+
+
++ + + 3. TXT Encoding Repair (Fix garbled text) + + +
+
+  - Script: fix_txt_encoding.py
+  - Function: Automatically fixes garbled text in TXT files caused by encoding problems.
+    Tries multiple common encodings (UTF-8, GBK, Big5, etc.) and saves the result in UTF-8.
+  - Workflow: After starting, input the directory containing TXT files to repair.
+
+
++ + + 4. TXT Paragraph Repair (Fix broken lines) + + +
+
+  - Script: txt_reformat.py
+  - Function: Repairs broken lines in novel TXT files (often caused by conversions from PDF).
+    Intelligently reconnects split sentences and paragraphs while preserving chapter headings.
+  - Workflow: After starting, input the directory containing TXT files to repair.

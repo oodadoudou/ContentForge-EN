@@ -6,19 +6,19 @@ import re
 from xml.etree import ElementTree as ET
 import json
 
-# 导入 OpenCC 模块，如果失败则提供清晰的安装指引
+# Import OpenCC; if import fails, provide clear installation guidance
 try:
     from opencc import OpenCC
     # 导入模块本身以获取其路径
     import opencc as opencc_module
 except ImportError:
-    print("错误: 无法导入 OpenCC。请先安装库: pip install opencc-python-reimplemented", file=sys.stderr)
+    print("Error: Failed to import OpenCC. Please install: pip install opencc-python-reimplemented", file=sys.stderr)
     sys.exit(1)
 
 def check_epub_needs_processing(epub_path, cc):
     """
-    检查 EPUB 文件是否需要处理。
-    返回: (是否需要格式转换, 是否需要文字转换)
+    Check whether an EPUB file needs processing.
+    Returns: (needs_layout_change, needs_char_conversion)
     """
     needs_layout_change = False
     needs_char_conversion = False
@@ -31,7 +31,7 @@ def check_epub_needs_processing(epub_path, cc):
             if not opf_path:
                 return False, False
 
-            # 1. 检查是否需要格式转换 (竖排 -> 横排)
+            # 1. Check whether layout conversion is needed (vertical -> horizontal)
             tree = ET.parse(opf_path)
             root = tree.getroot()
             ns = {'opf': 'http://www.idpf.org/2007/opf'}
@@ -39,7 +39,7 @@ def check_epub_needs_processing(epub_path, cc):
             if spine is not None and spine.get('page-progression-direction') == 'rtl':
                 needs_layout_change = True
             
-            # --- START: 优化后的繁简内容检测逻辑 ---
+            # --- START: Optimized Traditional/Simplified content detection ---
             for root_dir, _, files in os.walk(temp_dir):
                 content_files = [f for f in files if f.endswith(('.xhtml', '.html', '.opf'))]
                 if not content_files:
@@ -64,7 +64,7 @@ def check_epub_needs_processing(epub_path, cc):
                 
                 if needs_char_conversion:
                     break
-            # --- END: 优化后的繁简内容检测逻辑 ---
+            # --- END: Optimized Traditional/Simplified content detection ---
 
     except Exception:
         return False, False
@@ -73,7 +73,7 @@ def check_epub_needs_processing(epub_path, cc):
 
 
 def find_opf_file(temp_dir):
-    """在解压后的目录中查找 .opf 文件路径。"""
+    """Find the .opf file path in the unpacked directory."""
     for root, _, files in os.walk(temp_dir):
         for filename in files:
             if filename.endswith('.opf'):
@@ -81,7 +81,7 @@ def find_opf_file(temp_dir):
     return None
 
 def modify_opf_file(opf_path, cc, do_layout, do_chars):
-    """修改 .opf 文件，根据需要转换格式和文字。"""
+    """Modify the .opf file to convert layout and/or text as needed."""
     if not do_layout and not do_chars:
         return
     try:
@@ -95,7 +95,7 @@ def modify_opf_file(opf_path, cc, do_layout, do_chars):
             spine = root.find('opf:spine', ns)
             if spine is not None:
                 spine.set('page-progression-direction', 'ltr')
-                print("  - [格式] 页面翻页方向 -> 'ltr'.")
+                print("  - [Layout] Page progression direction -> 'ltr'.")
 
         if do_chars:
             metadata = root.find('opf:metadata', ns)
@@ -105,16 +105,16 @@ def modify_opf_file(opf_path, cc, do_layout, do_chars):
                         elem.text = cc.convert(elem.text)
                     if elem.tail and elem.tail.strip():
                         elem.tail = cc.convert(elem.tail)
-                print("  - [文字] 书籍元数据 -> 简体。")
+                print("  - [Text] Book metadata -> Simplified Chinese.")
 
         if sys.version_info >= (3, 9):
             ET.indent(tree)
         tree.write(opf_path, encoding='utf-8', xml_declaration=True)
     except Exception as e:
-        print(f"  - [错误] 修改 OPF 文件时出错: {e}")
+        print(f"  - [Error] Failed to modify OPF file: {e}")
 
 def modify_content_files(temp_dir, cc, do_layout, do_chars):
-    """修改内容文件，根据需要转换格式和文字。"""
+    """Modify content files to convert layout and/or text as needed."""
     for root_dir, _, files in os.walk(temp_dir):
         for filename in files:
             if not filename.endswith(('.xhtml', '.html', '.css', '.ncx')):
@@ -145,12 +145,12 @@ def modify_content_files(temp_dir, cc, do_layout, do_chars):
                 if content != original_content:
                     with open(file_path, 'w', encoding='utf-8') as f:
                         f.write(content)
-                    print(f"  - [修改] 已更新: {os.path.relpath(file_path, temp_dir)}")
+                    print(f"  - [Modified] Updated: {os.path.relpath(file_path, temp_dir)}")
             except Exception as e:
-                print(f"  - [错误] 处理文件 {filename} 失败: {e}")
+                print(f"  - [Error] Failed to process file {filename}: {e}")
 
 def repack_epub(temp_dir, new_epub_path):
-    """将修改后的文件重新打包成 EPUB。"""
+    """Repack modified files into an EPUB."""
     try:
         mimetype_path = os.path.join(temp_dir, 'mimetype')
         with zipfile.ZipFile(new_epub_path, 'w', zipfile.ZIP_DEFLATED) as zf:
@@ -161,20 +161,20 @@ def repack_epub(temp_dir, new_epub_path):
                         file_path = os.path.join(root_dir, filename)
                         arcname = os.path.relpath(file_path, temp_dir)
                         zf.write(file_path, arcname)
-        print(f"  -> [成功] 新文件已保存至: {os.path.basename(os.path.dirname(new_epub_path))}{os.sep}{os.path.basename(new_epub_path)}")
+        print(f"  -> [Success] New file saved to: {os.path.basename(os.path.dirname(new_epub_path))}{os.sep}{os.path.basename(new_epub_path)}")
     except Exception as e:
-        print(f"  - [错误] 重新打包 EPUB 失败: {e}")
+        print(f"  - [Error] Failed to repack EPUB: {e}")
 
 def process_epub_file(epub_path, output_dir, cc):
-    """处理单个EPUB文件，包含检测和按需转换。"""
-    print(f"\n[检查] {os.path.basename(epub_path)}")
+    """Process a single EPUB file, including detection and conversions as needed."""
+    print(f"\n[Check] {os.path.basename(epub_path)}")
     needs_layout, needs_chars = check_epub_needs_processing(epub_path, cc)
 
     if not needs_layout and not needs_chars:
-        print("  - [跳过] 文件无需转换。")
+        print("  - [Skip] No conversions needed.")
         return
 
-    print(f"  - [任务] 检测到需要进行: {'格式转换 ' if needs_layout else ''}{'文字转换' if needs_chars else ''}")
+    print(f"  - [Task] Required: {'Layout conversion ' if needs_layout else ''}{'Character conversion' if needs_chars else ''}")
     
     base_name, _ = os.path.splitext(os.path.basename(epub_path))
     new_epub_path = os.path.join(output_dir, f"{base_name}.epub")
@@ -186,7 +186,7 @@ def process_epub_file(epub_path, output_dir, cc):
             
             opf_path = find_opf_file(temp_dir)
             if not opf_path:
-                print("  - [错误] 无法找到 .opf 配置文件！")
+                print("  - [Error] .opf configuration file not found!")
                 return
 
             modify_opf_file(opf_path, cc, needs_layout, needs_chars)
@@ -194,11 +194,11 @@ def process_epub_file(epub_path, output_dir, cc):
             repack_epub(temp_dir, new_epub_path)
 
         except Exception as e:
-            print(f"  - [严重错误] 处理EPUB时发生未知问题: {e}")
+            print(f"  - [Critical] Unknown error while processing EPUB: {e}")
             
 def process_txt_file(txt_path, output_dir, cc):
-    """处理单个TXT文件，仅进行繁简转换。"""
-    print(f"\n[处理TXT] {os.path.basename(txt_path)}")
+    """Process a single TXT file; perform Traditional → Simplified conversion only."""
+    print(f"\n[Process TXT] {os.path.basename(txt_path)}")
     try:
         try:
             with open(txt_path, 'r', encoding='utf-8') as f:
@@ -210,23 +210,23 @@ def process_txt_file(txt_path, output_dir, cc):
         converted_content = cc.convert(content)
 
         if content == converted_content:
-            print("  - [跳过] TXT文件无需转换。")
+            print("  - [Skip] TXT file conversion not needed.")
             return
             
         new_txt_path = os.path.join(output_dir, os.path.basename(txt_path))
         with open(new_txt_path, 'w', encoding='utf-8') as f:
             f.write(converted_content)
-        print(f"  -> [成功] 新文件已保存至: {os.path.basename(output_dir)}{os.sep}{os.path.basename(new_txt_path)}")
+        print(f"  -> [Success] New file saved to: {os.path.basename(output_dir)}{os.sep}{os.path.basename(new_txt_path)}")
 
     except Exception as e:
-        print(f"  - [错误] 处理TXT文件时出错: {e}")
+        print(f"  - [Error] Error while processing TXT file: {e}")
 
 def initialize_opencc():
-    """初始化OpenCC转换器，包含健壮的后备方案。"""
+    """Initialize OpenCC converter with robust fallback options."""
     try:
         return OpenCC('t2s')
     except Exception as e_simple:
-        print("[警告] 标准 OpenCC 初始化失败，尝试使用后备方案...")
+        print("[Warning] Standard OpenCC initialization failed; attempting fallback...")
         try:
             package_path = opencc_module.__path__[0]
             
@@ -243,22 +243,22 @@ def initialize_opencc():
                     break
             
             if not config_path:
-                 raise FileNotFoundError("在 OpenCC 包目录中找不到配置文件 (t2s.json)。")
+                 raise FileNotFoundError("Could not find config file (t2s.json) in OpenCC package directory.")
 
-            print(f"[信息] 成功找到配置文件路径: {config_path}")
+            print(f"[Info] Found configuration file path: {config_path}")
             return OpenCC(config_path)
             
         except Exception as e_fallback:
-            print("错误：无法初始化 OpenCC 转换器。", file=sys.stderr)
-            print("标准模式和后备模式均已失败。这可能是因为库安装不完整或权限问题。", file=sys.stderr)
-            print(f"\n- 标准模式错误: {e_simple}", file=sys.stderr)
-            print(f"- 后备模式错误: {e_fallback}", file=sys.stderr)
-            print("\n请尝试彻底卸载并重新安装库: pip uninstall opencc-python-reimplemented -y && pip install opencc-python-reimplemented", file=sys.stderr)
+            print("Error: Unable to initialize OpenCC converter.", file=sys.stderr)
+            print("Both standard and fallback modes failed. This may be due to an incomplete installation or permission issues.", file=sys.stderr)
+            print(f"\n- Standard mode error: {e_simple}", file=sys.stderr)
+            print(f"- Fallback mode error: {e_fallback}", file=sys.stderr)
+            print("\nTry uninstalling and reinstalling: pip uninstall opencc-python-reimplemented -y && pip install opencc-python-reimplemented", file=sys.stderr)
             sys.exit(1)
 
-# --- 新增：函数用于从 settings.json 加载默认路径 ---
+# --- Added: function to load default path from settings.json ---
 def load_default_path_from_settings():
-    """从共享设置文件中读取默认工作目录。"""
+    """Read default working directory from the shared settings file."""
     try:
         project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         settings_path = os.path.join(project_root, 'shared_assets', 'settings.json')
@@ -270,24 +270,24 @@ def load_default_path_from_settings():
         return os.path.join(os.path.expanduser("~"), "Downloads")
 
 def main():
-    """脚本主入口。"""
+    """Script entry point."""
     cc = initialize_opencc()
-    print("[信息] OpenCC 初始化成功。")
+    print("[Info] OpenCC initialized successfully.")
 
     # --- 修改：动态加载默认路径 ---
     default_path = load_default_path_from_settings()
-    prompt_message = f"请输入目标根目录 (直接按回车将使用: {default_path}): "
+    prompt_message = f"Please enter the target root directory (Press Enter to use: {default_path}): "
     target_directory = input(prompt_message).strip() or default_path
 
     if not os.path.isdir(target_directory):
-        print(f"错误: 目录 '{target_directory}' 不存在或无效。", file=sys.stderr)
+        print(f"Error: Directory '{target_directory}' does not exist or is invalid.", file=sys.stderr)
         sys.exit(1)
         
     output_dir = os.path.join(target_directory, "processed_files")
     os.makedirs(output_dir, exist_ok=True)
     
-    print(f"[*] 开始扫描目录: {os.path.abspath(target_directory)}")
-    print(f"[*] 所有处理后的文件将被保存到: {output_dir}")
+    print(f"[*] Starting to scan directory: {os.path.abspath(target_directory)}")
+    print(f"[*] All processed files will be saved to: {output_dir}")
     
     for root, _, files in os.walk(target_directory):
         if os.path.abspath(root).startswith(os.path.abspath(output_dir)):
@@ -300,7 +300,7 @@ def main():
             elif filename.endswith('.txt'):
                 process_txt_file(file_path, output_dir, cc)
     
-    print("\n[*] 所有操作完成。")
+    print("\n[*] All operations completed.")
 
 if __name__ == "__main__":
     main()

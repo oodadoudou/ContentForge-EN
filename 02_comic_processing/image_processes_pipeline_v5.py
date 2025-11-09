@@ -443,17 +443,17 @@ def split_long_image_v4(long_image_path, output_split_dir, quantization_factor, 
             # --- [V4 Core Optimization 2: Precise edge verification] ---
             print(f"    [3/3] Precisely verifying edges across {len(candidate_indices)} candidate rows...")
             row_types = np.full(img_height, 'complex', dtype=object)
-            # 只对少数候选行进行耗时的边缘分析
+            # Perform expensive edge analysis only for a small number of candidate rows
             for y in candidate_indices:
                 center_dominant_color = candidate_dominant_colors[y]
                 
-                # 分析左边缘
+                # Analyze left edge
                 left_pixels = quantized_array[y, :margin_width]
                 left_dominant_color, left_color_count = get_dominant_color_numpy(left_pixels)
                 if left_color_count > max_unique_colors or left_dominant_color != center_dominant_color:
                     continue
 
-                # 分析右边缘
+                # Analyze right edge
                 right_pixels = quantized_array[y, -margin_width:]
                 right_dominant_color, right_color_count = get_dominant_color_numpy(right_pixels)
                 if right_color_count > max_unique_colors or right_dominant_color != center_dominant_color:
@@ -464,7 +464,7 @@ def split_long_image_v4(long_image_path, output_split_dir, quantization_factor, 
             analysis_duration = time.time() - start_time
             print(f"    Analysis completed in: {analysis_duration:.2f} seconds.")
 
-            # --- 后续的切块与保存逻辑 ---
+            # --- Subsequent block detection and saving logic ---
             blocks, last_y = [], 0
             change_points = np.where(row_types[:-1] != row_types[1:])[0] + 1
             for y_change in change_points:
@@ -516,7 +516,7 @@ def split_long_image_hybrid(long_image_path, output_split_dir):
     print(f"\n  --- Step 2 (V5 - Intelligent hybrid split): Split long image '{os.path.basename(long_image_path)}' ---")
     print("    🔄 Using intelligent dual-split strategy: V2 traditional → V4 high-speed")
     
-    # 首先尝试 V2 方法
+    # First, try the V2 method
     print("\n    📋 Phase 1: Try V2 traditional solid-band analysis...")
     print("    🎨 Using preset common Korean webtoon background colors to improve speed and efficiency...")
     
@@ -534,7 +534,7 @@ def split_long_image_hybrid(long_image_path, output_split_dir):
     
     print("    ⚠️  V2 method failed to split effectively; switching to V4...")
     
-    # 清理 V2 可能产生的文件
+    # Clean potential files produced by V2
     if v2_result:
         print("    🧹 Cleaning V2 split outputs...")
         for file_path in v2_result:
@@ -545,7 +545,7 @@ def split_long_image_hybrid(long_image_path, output_split_dir):
                 except Exception as e:
                     print(f"      Delete failed for {os.path.basename(file_path)}: {e}")
     
-    # 尝试 V4 方法
+    # Then try the V4 method
     print("\n    🚀 Phase 2: Enable V4 two-stage high-speed analysis...")
     v4_result = split_long_image_v4(
         long_image_path,
@@ -562,7 +562,7 @@ def split_long_image_hybrid(long_image_path, output_split_dir):
     
     print("    ❌ Both split methods failed to segment effectively; using original image.")
     
-    # 如果两种方法都失败，复制原图
+    # If both methods fail, copy the original image
     dest_path = os.path.join(output_split_dir, os.path.basename(long_image_path))
     shutil.copy2(long_image_path, dest_path)
     return [dest_path]
@@ -580,7 +580,7 @@ def split_long_image_hybrid_with_pdf_fallback(long_image_path, output_split_dir,
     print("    🔄 Using intelligent dual-split strategy: V2 traditional → V4 high-speed")
     print("    📋 Failure criteria: automatically switch when PDF creation fails")
     
-    # 首先尝试 V2 方法
+    # First, try the V2 method
     print("\n    📋 Phase 1: Try V2 traditional solid-band analysis...")
     print("    🎨 Using preset common Korean webtoon background colors to improve speed and efficiency...")
     
@@ -596,14 +596,14 @@ def split_long_image_hybrid_with_pdf_fallback(long_image_path, output_split_dir,
         print(f"    ✅ V2 split succeeded! Generated {len(v2_result)} segments.")
         print("    📄 Attempting to create PDF from V2 split results...")
         
-        # 尝试重打包
+        # Try repacking
         repacked_v2_paths = repack_split_images(
             v2_result, output_split_dir, base_filename=subdir_name,
             max_size_mb=MAX_REPACKED_FILESIZE_MB, max_height_px=MAX_REPACKED_PAGE_HEIGHT_PX
         )
         
         if repacked_v2_paths:
-            # 尝试创建 PDF
+            # Try creating the PDF
             created_pdf_path = create_pdf_from_images(
                 repacked_v2_paths, pdf_output_dir, pdf_filename
             )
@@ -644,7 +644,7 @@ def split_long_image_hybrid_with_pdf_fallback(long_image_path, output_split_dir,
     else:
         print("    ⚠️  V2 method split failed; switching to V4...")
     
-    # 清理可能创建的失败 PDF
+    # Clean up any failed PDF created
     potential_pdf_path = os.path.join(pdf_output_dir, pdf_filename)
     if os.path.exists(potential_pdf_path):
         try:
@@ -653,7 +653,7 @@ def split_long_image_hybrid_with_pdf_fallback(long_image_path, output_split_dir,
         except Exception as e:
             print(f"      Failed to delete failed PDF file: {e}")
     
-    # 尝试 V4 方法
+    # Then try the V4 method
     print("\n    🚀 Phase 2: Enable V4 two-stage high-speed analysis...")
     v4_result = split_long_image_v4(
         long_image_path,
@@ -668,14 +668,14 @@ def split_long_image_hybrid_with_pdf_fallback(long_image_path, output_split_dir,
         print(f"    ✅ V4 split succeeded! Generated {len(v4_result)} segments.")
         print("    📄 Creating PDF from V4 split results...")
         
-        # 尝试重打包
+        # Try repacking
         repacked_v4_paths = repack_split_images(
             v4_result, output_split_dir, base_filename=subdir_name,
             max_size_mb=MAX_REPACKED_FILESIZE_MB, max_height_px=MAX_REPACKED_PAGE_HEIGHT_PX
         )
         
         if repacked_v4_paths:
-            # 尝试创建 PDF
+            # Try creating the PDF
             created_pdf_path = create_pdf_from_images(
                 repacked_v4_paths, pdf_output_dir, pdf_filename
             )
@@ -692,7 +692,7 @@ def split_long_image_hybrid_with_pdf_fallback(long_image_path, output_split_dir,
     
     print("    ❌ Both methods failed to split; using original image.")
     
-    # 如果两种方法都失败，复制原图并尝试创建 PDF
+    # If both methods fail, copy the original image and try to create a PDF
     dest_path = os.path.join(output_split_dir, os.path.basename(long_image_path))
     shutil.copy2(long_image_path, dest_path)
     
