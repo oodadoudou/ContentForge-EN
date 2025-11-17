@@ -1,63 +1,63 @@
 ============================================================
-           模块五: 文件库管理 (05_library_organization)
+           Module Five: Library Organization (05_library_organization)
 ============================================================
 
-【简介】
-本模块提供了一系列强大的自动化工具，用于对您本地的文件和文件
-夹进行整理、翻译、重命名和归档，能将杂乱的下载目录变得井井
-有条。
+[Overview]
+This module provides a set of powerful automation tools to organize, translate,
+rename, and archive your local files and folders, turning a cluttered downloads
+directory into a tidy library.
 
-【核心脚本】
+[Core Scripts]
 
-translate_and_org_dirs.py (⭐ 核心整理流程)
+translate_and_org_dirs.py (⭐ Core organization pipeline)
 
-folder_codec.py (⭐ 文件/文件夹加密工具)
+folder_codec.py (⭐ File/Folder encryption tool)
 
 extract_epub_css.py
 
-【使用方法】
-本模块的所有功能都已整合到项目根目录的 main.py 交互式菜单中。
+[Usage]
+All features of this module are integrated into the interactive menu in the project root's main.py.
 
-在终端中，进入 ContentForge 根目录，运行 python main.py。
+In the terminal, navigate to the ContentForge root directory and run: python main.py
 
-在主菜单选择 "5. 文件库管理"。
+Choose "5. Library Organization" from the main menu.
 
-根据子菜单的提示选择您需要的功能。
+Follow the submenu prompts to select the feature you need.
 
---------------------- 功能与用法详解 ---------------------
+--------------------- Features & Usage Details ---------------------
 
-智能整理与翻译文件夹 + + +
-
-<!-- end list -->
-
-  - **对应脚本**: `translate_and_org_dirs.py`
-  - **功能**: 这是一个功能强大的全自动整理与翻译流水线，适合处理从下载到最终归档的全过程。
-  - **核心流程**:
-    1.  **文件预处理**: 自动将根目录下的散乱文件（如pdf, epub, jpg, zip等）根据文件名智能地分组并移入新创建的子文件夹中。
-    2.  **AI 翻译**: 调用 AI API 将文件夹名称从韩语或日语翻译为流畅的简体中文。
-    3.  **中文重命名**: 根据翻译结果，重命名文件夹。
-    4.  **添加拼音前缀**: 为所有中文名的文件夹添加拼音首字母前缀（例如，“一部漫画” -\> “Y-一部漫画”），便于排序。
-  - **操作流程**: 运行此功能时，程序会引导您进行 AI 配置（首次使用时），确认无误后，只需输入要整理的根目录路径即可。
-
-(工具) 文件夹加密与解密 + + +
+Smart Organization and Folder Translation + + +
 
 <!-- end list -->
 
-  - **对应脚本**: `folder_codec.py`
-  - **功能**: 提供一个强大的双层加密打包与恢复工具。可处理单个文件或整个文件夹，生成一个无法直接识别的 `.z删ip` 格式文件。
-  - **应用场景**: 当您需要安全地备份、归档或分享文件，不希望其内容或格式被直接预览时，此工具非常有用。
-  - **核心技术**:
-      - **智能混合模式**: 自动检测系统是否安装了 `7z` 和 `zip` 等原生命令。如果检测到，则以**高速模式**运行；否则，自动切换到纯Python库实现的**兼容模式**，确保在任何系统（尤其是Windows）上都能开箱即用。
-      - **保留源文件**: 加密打包过程不会删除您的原始文件或文件夹，确保数据安全。
-      - **自动修复结构**: 解密时会自动修复因压缩产生的冗余嵌套目录（例如 `MyFolder/MyFolder/...`）。
-      - **人性化提示**: 在兼容模式下运行时，程序结束时会根据您的操作系统（macOS/Windows/Linux）提供具体的安装命令，指导您如何安装原生工具以提升未来运行速度。
-  - **操作流程**: 在菜单中选择此项，然后根据提示选择“加密打包”或“解密恢复”，并指定工作目录即可。
+  - **Script**: `translate_and_org_dirs.py`
+  - **Purpose**: A powerful fully automated pipeline for organizing and translation, suitable for handling the entire process from download to final archiving.
+  - **Core Flow**:
+    1.  **File Preprocessing**: Automatically groups loose files (such as pdf, epub, jpg, zip, etc.) in the root directory based on filenames and moves them into newly created subfolders.
+    2.  **AI Translation**: Calls an AI API to translate folder names from Korean or Japanese to fluent Simplified Chinese.
+    3.  **Chinese Renaming**: Renames folders according to translation results.
+    4.  **Add Pinyin Prefix**: Adds a pinyin first-letter prefix for all Chinese-named folders (e.g., “一部漫画” -> “Y-一部漫画”) to aid sorting.
+  - **Operation**: When running this feature, the program will guide you through AI configuration (on first use). After confirmation, simply input the root directory path to organize.
 
-(工具) 从 EPUB 提取 CSS + + +
+(Tool) Folder Encryption and Decryption + + +
 
 <!-- end list -->
 
-  - **对应脚本**: `extract_epub_css.py`
-  - **功能**: 这是一个诊断工具，用于从指定目录的所有 EPUB 文件中提取出其内部的 .css 样式表文件。
-  - **应用场景**: 当你想分析或调试某个 EPUB 的排版问题时，可以先用此脚本提取其样式表进行检查，或将其作为自定义样式的基础。
-  - **操作流程**: 运行后，输入包含 EPUB 文件的目录路径即可。提取出的 .css 文件会保存在与对应 .epub 文件相同的目录中。
+  - **Script**: `folder_codec.py`
+  - **Purpose**: Provides a robust two-layer encryption packing and recovery tool. It can process single files or entire folders, producing a `.z删ip` file that is not directly recognizable.
+  - **Use Cases**: Useful when you need to securely back up, archive, or share files without allowing direct preview of content or format.
+  - **Key Techniques**:
+      - **Smart Hybrid Mode**: Automatically detects whether native commands like `7z` and `zip` are installed. If detected, runs in **high-speed mode**; otherwise, switches to a pure Python **compatibility mode**, ensuring it works out-of-the-box on any system (especially Windows).
+      - **Preserve Source Files**: The encryption packing process does not delete your original files or folders, ensuring data safety.
+      - **Auto Structure Fix**: During decryption, automatically fixes redundant nested directories caused by compression (e.g., `MyFolder/MyFolder/...`).
+      - **Helpful Tips**: When running in compatibility mode, at the end the program provides OS-specific install commands (macOS/Windows/Linux) to help you install native tools for future speed improvements.
+  - **Operation**: Choose this item in the menu, then select "Encrypt & Pack" or "Decrypt & Restore", and specify the working directory.
+
+(Tool) Extract CSS from EPUB + + +
+
+<!-- end list -->
+
+  - **Script**: `extract_epub_css.py`
+  - **Purpose**: A diagnostic tool that extracts internal .css stylesheet files from all EPUBs in the specified directory.
+  - **Use Cases**: When you want to analyze or debug the layout of an EPUB, you can first extract its stylesheets for inspection or use them as a basis for custom styles.
+  - **Operation**: After running, input the directory path containing EPUB files. Extracted .css files will be saved in the same directory as the corresponding .epub files.
