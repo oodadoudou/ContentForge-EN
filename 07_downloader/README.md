@@ -1,63 +1,58 @@
 ============================================================
-           模块七: 通用下载器 (07_downloader)
+           Module Seven: General Downloader (07_downloader)
 ============================================================
 
-【简介】
-  本模块提供针对特定网站的专用下载工具。目前支持从 Diritto
-  网站下载小说内容。
+[Overview]
+  This module provides specialized download tools for specific websites. Currently supports downloading novel content from Diritto.
 
 
-【核心脚本】
+[Core Scripts]
   - diritto_downloader.py
 
 
-【使用方法】
-  本模块的所有功能都已整合到项目根目录的 main.py 交互式菜单中。
+[Usage]
+  All features of this module are integrated into the interactive menu in the project root's main.py.
 
-  1. 在终端中，进入 ContentForge 根目录，运行 `python main.py`。
-  2. 在主菜单选择 "7. 通用下载器"。
-  3. 根据子菜单的提示选择您需要的功能。
+  1. In the terminal, navigate to the ContentForge root directory and run `python main.py`.
+  2. In the main menu select "7. General Downloader".
+  3. Follow the submenu prompts to choose the feature you need.
 
 
---------------------- 功能与用法详解 ---------------------
+--------------------- Features & Usage Details ---------------------
 
-+ + + 1. [Diritto] 小说下载器 + + +
++ + + 1. [Diritto] Novel Downloader + + +
 
-  - **对应脚本**: `diritto_downloader.py`
-  - **功能**: 自动抓取指定 Diritto 小说页面的所有章节内容，
-    将每一章保存为独立的 TXT 文件，最后将所有章节打包成一个
-    ZIP 压缩文件，存放在您的默认工作目录中。
-  - **应用场景**: 当您需要备份或离线阅读 Diritto 上的小说时使用。
+  - **Script**: `diritto_downloader.py`
+  - **Purpose**: Automatically scrape all chapter content from the specified Diritto novel page, save each chapter as an individual TXT file, and finally package all chapters into a ZIP archive stored in your default working directory.
+  - **Use Cases**: Use when you need to back up or read Diritto novels offline.
 
-  - **【重要】准备工作**:
-    此工具需要通过“远程调试”模式连接到您已登录的 Chrome 浏览器
-    才能工作。请在运行脚本前，务必按以下步骤操作：
+  - **Important Preparation**:
+    This tool needs to connect to your logged-in Chrome browser via "remote debugging" mode. Before running the script, be sure to follow the steps below:
 
-    1.  **完全关闭所有 Chrome 浏览器窗口**。
-        (请检查任务栏或 Dock，确保 Chrome 已完全退出)。
+    1.  **Completely close all Chrome windows**.
+        (Check the taskbar or Dock to ensure Chrome has fully exited.)
 
-    2.  **使用命令行启动 Chrome**。
-        您需要打开系统的终端 (Windows 的 CMD/PowerShell 或 macOS 的终端)。
+    2.  **Launch Chrome via the command line**.
+        Open your system terminal (Windows CMD/PowerShell or macOS Terminal).
 
-        - **对于 Windows 用户**:
-          在终端中输入以下命令并按回车：
+        - **For Windows users**:
+          Enter the following command in the terminal and press Enter:
           ```bash
           "C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9222
           ```
-          *(如果您的 Chrome 安装在其他路径，请相应修改)*
+          *(If your Chrome is installed in another path, modify accordingly.)*
 
-        - **对于 macOS 用户**:
-          在终端中输入以下命令并按回车：
+        - **For macOS users**:
+          Enter the following command in the terminal and press Enter:
           ```bash
           /Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --remote-debugging-port=9222
           ```
 
-    3.  **保持终端和新打开的 Chrome 窗口不要关闭**。
-        成功后，您会看到一个独立的 Chrome 窗口被打开。现在您可以
-        正常登录 Diritto 网站了。
+    3.  **Keep the terminal and the newly opened Chrome window open**.
+        Once successful, you will see a separate Chrome window open. You can now log in to the Diritto website normally.
 
-  - **操作流程**:
-    1.  完成上述准备工作，并保持 Chrome 运行。
-    2.  返回 ContentForge，在主菜单进入本模块并选择下载功能。
-    3.  根据提示，粘贴您要下载的小说目录页的 URL。
-    4.  程序将自动开始抓取，您可以在终端看到实时进度。
+  - **Operation**:
+    1.  Complete the preparation above and keep Chrome running.
+    2.  Return to ContentForge, enter this module from the main menu and select the download feature.
+    3.  Paste the URL of the novel directory page you want to download as prompted.
+    4.  The program will automatically begin scraping, and you can see real-time progress in the terminal.

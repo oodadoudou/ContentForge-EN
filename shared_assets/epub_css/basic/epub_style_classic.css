@@ -1,4 +1,4 @@
-/* 经典简约样式 - 适合长篇小说 */
+/* Classic minimal style - suitable for long novels */
 body {
 line-height: 1.7;
 margin: 3% 5%;
@@ -33,7 +33,7 @@ p {
 font-size: 1em;
 margin-top: 0;
 margin-bottom: 1.2em;
-text-indent: 2em;     /* 首行缩进 */
+text-indent: 2em;     /* First-line indent */
 orphans: 2;
 widows: 2;
 }

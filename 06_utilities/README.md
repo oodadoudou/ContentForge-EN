@@ -1,33 +1,31 @@
 ============================================================
-              模块六: 辅助工具 (06_utilities)
+              Module Six: Utilities (06_utilities)
 ============================================================
 
-【简介】
-  本模块提供一些在特定场景下使用的、非核心流程的辅助小工具。
+[Overview]
+  This module provides auxiliary tools used in specific scenarios, outside of core workflows.
 
 
-【核心脚本】
+[Core Scripts]
   - open_bomtoon.py
 
 
-【使用方法】
-  本模块的所有功能都已整合到项目根目录的 main.py 交互式菜单中。
+[Usage]
+  All features of this module are integrated into the interactive menu in the project root's main.py.
 
-  1. 在终端中，进入 ContentForge 根目录，运行 `python main.py`。
-  2. 在主菜单选择 "6. 辅助工具"。
-  3. 根据子菜单的提示选择您需要的功能。
+  1. In a terminal, navigate to the ContentForge root directory and run `python main.py`.
+  2. In the main menu select "6. Utilities".
+  3. Follow the submenu prompts to choose the feature you need.
 
 
---------------------- 功能与用法详解 ---------------------
+--------------------- Features & Usage Details ---------------------
 
-+ + + 1. 批量打开网页 + + +
++ + + 1. Batch Open Web Pages + + +
 
-  - 对应脚本: open_bomtoon.py
-  - 功能: 在您的默认浏览器中，批量打开一系列基于特定漫画、
-    连续编号的网址。
-  - 应用场景: 当需要快速连续打开网页进行浏览或手动检查时使用。
-  - 操作流程: 运行此功能后，脚本会通过交互式问答引导您完成
-    以下步骤：
-      1. 输入起始数字 (例如: 27)
-      2. 输入结束数字 (例如: 42)
-    程序会自动打开从起始到结束的所有对应网页。
+  - Script: open_bomtoon.py
+  - Purpose: Batch open a series of sequentially numbered URLs for a specific comic in your default browser.
+  - Use Cases: Use when you need to quickly open pages consecutively for browsing or manual checks.
+  - Operation: After running this feature, the script will guide you through interactive prompts:
+      1. Enter the starting number (e.g., 27)
+      2. Enter the ending number (e.g., 42)
+    The program will automatically open all corresponding pages from start to end.

@@ -410,7 +410,7 @@ body {
     transform: rotate(180deg);
 }
 
-/* 返回顶部按钮 */
+/* Back to top button */
 .back-to-top {
     position: fixed;
     bottom: 30px;

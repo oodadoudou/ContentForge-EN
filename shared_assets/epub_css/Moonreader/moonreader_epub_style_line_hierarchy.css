@@ -1,4 +1,4 @@
-/* 线条层次样式 - 静读天下适配版 */
+/* Line Hierarchy Style - Moon+ Reader adaptation */
 
 body {
     font-size: 1em;
@@ -47,7 +47,7 @@ p {
     line-height: 1.7;
 }
 
-/* 图片样式 */
+/* Image styles */
 img {
     max-width: 100%;
     height: auto;
@@ -57,7 +57,7 @@ img {
     padding: 5px;
 }
 
-/* 书名和作者样式 */
+/* Title and author styles */
 .book-title {
     font-size: 28px;
     font-weight: bold;
@@ -76,7 +76,7 @@ img {
     font-style: italic;
 }
 
-/* 目录页样式修正 */
+/* TOC style adjustments */
 .toc {
     text-align: left;
 }
@@ -93,18 +93,18 @@ img {
     margin-bottom: 0.5em;
 }
 
-/* 无缩进段落 */
+/* No-indent paragraph */
 p.no-indent {
     text-indent: 0;
 }
 
-/* 居中段落 */
+/* Centered paragraph */
 p.center {
     text-align: center;
     text-indent: 0;
 }
 
-/* 右对齐段落 */
+/* Right-aligned paragraph */
 p.right {
     text-align: right;
     text-indent: 0;

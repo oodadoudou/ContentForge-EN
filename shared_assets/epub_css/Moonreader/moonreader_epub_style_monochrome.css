@@ -1,4 +1,4 @@
-/* 单色样式 - 静读天下适配版 */
+/* Monochrome Style - Moon+ Reader adaptation */
 
 body {
     font-size: 16px;
@@ -45,7 +45,7 @@ p {
     widows: 2;
 }
 
-/* 图片样式 */
+/* Image styles */
 img {
     max-width: 100%;
     height: auto;
@@ -54,7 +54,7 @@ img {
     border: none;
 }
 
-/* 书名和作者样式 */
+/* Title and author styles */
 .book-title {
     font-size: 48px;
     font-weight: 900;
@@ -78,7 +78,7 @@ img {
     border: 5px solid #000000;
 }
 
-/* 目录页样式修正 */
+/* TOC style adjustments */
 .toc {
     text-align: left;
 }
@@ -100,18 +100,18 @@ img {
     max-width: none;
 }
 
-/* 无缩进段落 */
+/* No-indent paragraph */
 p.no-indent {
     text-indent: 0;
 }
 
-/* 居中段落 */
+/* Centered paragraph */
 p.center {
     text-align: center;
     text-indent: 0;
 }
 
-/* 右对齐段落 */
+/* Right-aligned paragraph */
 p.right {
     text-align: right;
     text-indent: 0;

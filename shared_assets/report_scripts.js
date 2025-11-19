@@ -17,15 +17,15 @@ function toggleRulesList() {
 }
 
 function jumpToRule(groupIndex) {
-    // 关闭规则列表
+    // Close the rules list
     toggleRulesList();
     
-    // 滚动到对应的规则组
+    // Scroll to the corresponding rule group
     const ruleGroup = document.querySelector(`[data-group-index="${groupIndex}"]`);
     if (ruleGroup) {
         ruleGroup.scrollIntoView({ behavior: 'smooth', block: 'center' });
         
-        // 自动展开该规则组
+        // Automatically expand the rule group
         const container = document.getElementById('instances-' + groupIndex);
         const icon = document.getElementById('toggle-' + groupIndex);
         if (container && !container.classList.contains('expanded')) {
@@ -33,7 +33,7 @@ function jumpToRule(groupIndex) {
             icon.classList.add('expanded');
         }
         
-        // 添加高亮效果
+        // Add highlight effect
         ruleGroup.style.boxShadow = '0 0 20px rgba(233, 30, 99, 0.3)';
         setTimeout(() => {
             ruleGroup.style.boxShadow = '';
@@ -41,12 +41,12 @@ function jumpToRule(groupIndex) {
     }
 }
 
-// 返回顶部按钮功能
+// Back-to-top button functionality
 function initBackToTopButton() {
     const backToTopBtn = document.getElementById('back-to-top');
     if (!backToTopBtn) return;
     
-    // 监听滚动事件
+    // Listen to scroll events
     window.addEventListener('scroll', function() {
         if (window.pageYOffset > 300) {
             backToTopBtn.classList.add('show');
@@ -55,7 +55,7 @@ function initBackToTopButton() {
         }
     });
     
-    // 点击返回顶部
+    // Click to scroll back to top
     backToTopBtn.addEventListener('click', function() {
         window.scrollTo({
             top: 0,
@@ -64,7 +64,7 @@ function initBackToTopButton() {
     });
 }
 
-// 点击模态框背景关闭
+// Click modal backdrop to close
 document.addEventListener('DOMContentLoaded', function() {
     const rulesListContainer = document.getElementById('rules-list');
     if (rulesListContainer) {
@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // ESC 键关闭模态框
+    // ESC key closes modal
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             const rulesList = document.getElementById('rules-list');
@@ -85,6 +85,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // 初始化返回顶部按钮
+    // Initialize back-to-top button
     initBackToTopButton();
 });
